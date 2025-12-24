@@ -141,3 +141,6 @@ Brewfile.lock.json
 
 # Gradle wrapper
 !/gradle/wrapper/gradle-wrapper.jar
+
+# Android local configuration
+android/local.properties
