@@ -144,3 +144,4 @@ Brewfile.lock.json
 
 # Android local configuration
 android/local.properties
+android/gradle.local.properties
