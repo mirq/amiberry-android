@@ -52,18 +52,13 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-gradle-
 
-      - name: Cache CMake build
-        uses: actions/cache@v4
-        with:
-          path: build-android
-          key: ${{ runner.os }}-cmake-android-${{ hashFiles('CMakeLists.txt', 'cmake/**', 'src/**/*.cpp', 'src/**/*.h') }}
-          restore-keys: |
-            ${{ runner.os }}-cmake-android-
-
       - name: Install native dependencies
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake ninja-build
+
+      - name: Clean previous build
+        run: rm -rf build-android
 
       - name: Configure CMake for Android
         run: |
