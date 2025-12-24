@@ -2328,6 +2328,8 @@ void target_run()
 
 void target_quit()
 {
+	// Cleanup is handled by do_leave_program() and main()
+	// No Android-specific handling needed here
 }
 
 void target_fixup_options(uae_prefs* p)
@@ -5631,6 +5633,12 @@ int main(int argc, char* argv[])
 	logging_cleanup();
 
 	SDL_Quit();
+
+#ifdef __ANDROID__
+	// Force process termination on Android to ensure clean exit
+	// This prevents the app from lingering in memory after quit
+	std::exit(0);
+#endif
 
 	if (host_poweroff)
 		target_shutdown();

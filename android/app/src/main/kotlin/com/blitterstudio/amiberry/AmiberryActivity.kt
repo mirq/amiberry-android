@@ -207,6 +207,17 @@ class AmiberryActivity : SDLActivity() {
         }
     }
 
+    override fun onDestroy() {
+        Log.d(TAG, "onDestroy() - Cleaning up resources")
+        
+        // Clean up overlays to prevent memory leaks
+        virtualJoystickOverlay = null
+        virtualKeyboardOverlay = null
+        
+        // Call parent cleanup
+        super.onDestroy()
+    }
+
     private fun hideSystemUI() {
         WindowCompat.setDecorFitsSystemWindows(window, false)
         WindowInsetsControllerCompat(window, window.decorView).let { controller ->
