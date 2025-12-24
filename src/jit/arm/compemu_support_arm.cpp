@@ -3129,7 +3129,9 @@ void compile_block(cpu_history* pc_hist, int blocklen, int totcycles)
 
 #ifdef __ANDROID__
         // On Android, flush icache using the RX (executable) addresses
-        flush_cpu_icache(jit_rw_to_rx((void*)current_block_start_target), jit_rw_to_rx((void*)target));
+        // current_block_start_target is already RX (set via JIT_EXEC_ADDR at line 2906)
+        // target is RW (from get_target()), so only convert target
+        flush_cpu_icache((void*)current_block_start_target, jit_rw_to_rx((void*)target));
 #else
         flush_cpu_icache((void*)current_block_start_target, (void*)target);
 #endif

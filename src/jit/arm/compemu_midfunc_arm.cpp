@@ -573,9 +573,24 @@ STATIC_INLINE void flush_cpu_icache(void *start, void *stop)
 
 STATIC_INLINE void write_jmp_target(uae_u32* jmpaddr, uintptr a) 
 {
+#ifdef __ANDROID__
+	// On Android with dual-mapping JIT:
+	// - jmpaddr is the RW (write) address where we modify the instruction
+	// - a is the RX (execute) target address
+	// - The offset must be calculated relative to where the CPU will execute from (RX)
+	// - ARM32 branch offset is relative to PC+8, so subtract 8
+	uintptr jmpaddr_rx = (uintptr)jit_rw_to_rx((void*)jmpaddr);
+	uintptr off = ((uintptr)a - jmpaddr_rx - 8) >> 2;
+#else
 	uintptr off = ((uintptr)a - (uintptr)jmpaddr - 8) >> 2;
+#endif
 	*(jmpaddr) = (*(jmpaddr) & 0xff000000) | (off & 0x00ffffff);
-  flush_cpu_icache((void *)jmpaddr, (void *)&jmpaddr[1]);
+#ifdef __ANDROID__
+	// Flush icache at the RX address where CPU will execute
+	flush_cpu_icache((void *)jmpaddr_rx, (void *)(jmpaddr_rx + 4));
+#else
+	flush_cpu_icache((void *)jmpaddr, (void *)&jmpaddr[1]);
+#endif
 }
 
 

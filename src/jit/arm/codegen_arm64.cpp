@@ -462,7 +462,14 @@ STATIC_INLINE void compemu_raw_maybe_recompile(void)
 STATIC_INLINE void compemu_raw_jmp(uintptr t)
 {
 	uintptr loc = (uintptr)get_target();
+#ifdef __ANDROID__
+	// On Android, t is RX (execute) address, loc is RW (write) address
+	// For range check, we need to compare RX addresses
+	uintptr loc_rx = (uintptr)jit_rw_to_rx((void*)loc);
+	if(t > loc_rx - 127 * 1024 * 1024 && t < loc_rx + 127 * 1024 * 1024) {
+#else
 	if(t > loc - 127 * 1024 * 1024 && t < loc + 127 * 1024 * 1024) {
+#endif
 		B_i(0);
 		write_jmp_target((uae_u32*)loc, t);
 	} else {
