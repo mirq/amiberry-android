@@ -35,6 +35,10 @@
 #include "sysconfig.h"
 #include "sysdeps.h"
 
+#ifdef __ANDROID__
+#include "android_jit.h"
+#endif
+
 #if defined(JIT)
 
 #include "options.h"
@@ -45,8 +49,9 @@
 #include "compemu_arm.h"
 #include <SDL.h>
 
-#if defined(__pie__) || defined (__PIE__)
-#error Position-independent code (PIE) cannot be used with JIT
+// PIE check - Android requires PIE but uses dual-mapping for JIT
+#if (defined(__pie__) || defined(__PIE__)) && !defined(__ANDROID__)
+#error Position-independent code (PIE) cannot be used with JIT (except on Android)
 #endif
 
 #ifdef __MACH__
@@ -62,13 +67,54 @@
 #define VM_MAP_DEFAULT 1
 #define VM_MAP_32BIT 1
 #define vm_protect(address, size, protect) uae_vm_protect(address, size, protect)
+
+#ifdef __ANDROID__
+// On Android, we track JIT allocations separately for dual-mapping cleanup
+#define vm_release(address, size) uae_vm_free_jit(address, size)
+#else
 #define vm_release(address, size) uae_vm_free(address, size)
+#endif
 
 static inline void *vm_acquire(uae_u32 size, int options = VM_MAP_DEFAULT)
 {
 	assert(options == (VM_MAP_DEFAULT | VM_MAP_32BIT));
+#ifdef __ANDROID__
+	// On Android, use dual-mapped JIT allocation for W^X compliance
+	return uae_vm_alloc_jit(size, UAE_VM_32BIT);
+#else
 	return uae_vm_alloc(size, UAE_VM_32BIT, UAE_VM_READ_WRITE);
+#endif
 }
+
+#ifdef __ANDROID__
+/**
+ * Convert a JIT RW (write) address to its corresponding RX (execute) address.
+ * On Android, JIT code is written to RW memory but executed from RX memory.
+ * Both map to the same physical memory via dual-mapping.
+ */
+static inline void* jit_rw_to_rx(void* rw_addr)
+{
+    if (!rw_addr) return nullptr;
+    return android_jit_rw_to_rx(rw_addr);
+}
+
+/**
+ * Convert a JIT RX (execute) address to its corresponding RW (write) address.
+ */
+static inline void* jit_rx_to_rw(void* rx_addr)
+{
+    if (!rx_addr) return nullptr;
+    return android_jit_rx_to_rw(rx_addr);
+}
+
+// Macro to convert get_target() result to an executable address
+#define JIT_EXEC_ADDR(addr) ((uae_u8*)jit_rw_to_rx((void*)(addr)))
+#else
+// On non-Android platforms, RW and RX are the same address
+#define JIT_EXEC_ADDR(addr) (addr)
+static inline void* jit_rw_to_rx(void* addr) { return addr; }
+static inline void* jit_rx_to_rw(void* addr) { return addr; }
+#endif
 
 #define UNUSED(x)
 #if defined(CPU_AARCH64)
@@ -2195,7 +2241,13 @@ void alloc_cache(void)
 			cache_size /= 2;
 		}
 	}
+#ifdef __ANDROID__
+	// On Android, we use dual-mapped memory from android_jit_alloc().
+	// No need to call vm_protect - the RW mapping is already set up for writing,
+	// and the RX mapping (obtained via android_jit_get_rx_ptr) is for execution.
+#else
 	vm_protect(compiled_code, cache_size * 1024, VM_PAGE_READ | VM_PAGE_WRITE | VM_PAGE_EXECUTE);
+#endif
 
     if (compiled_code) {
         jit_log("<JIT compiler> : actual translation cache size : %d KB at %p-%p\n", cache_size, compiled_code, compiled_code + cache_size * 1024);
@@ -2392,7 +2444,12 @@ STATIC_INLINE void create_popalls(void)
             return;
         }
     }
+#ifdef __ANDROID__
+    // On Android, popallspace is already RW from dual-mapped allocation
+    // No need to call vm_protect
+#else
     vm_protect(popallspace, POPALLSPACE_SIZE, VM_PAGE_READ | VM_PAGE_WRITE);
+#endif
 
     current_compile_p = popallspace;
     set_target(current_compile_p);
@@ -2411,7 +2468,7 @@ STATIC_INLINE void create_popalls(void)
      In summary, JIT generated code is not leaf so we have to deal
      with it here to maintain correct stack alignment. */
     current_compile_p = get_target();
-    pushall_call_handler = get_target();
+    pushall_call_handler = JIT_EXEC_ADDR(get_target());
     raw_push_regs_to_preserve();
 #ifdef JIT_DEBUG
     write_log("Address of regs: 0x%016x, regs.pc_p: 0x%016x\n", &regs, &regs.pc_p);
@@ -2422,28 +2479,28 @@ STATIC_INLINE void create_popalls(void)
     compemu_raw_jmp_pc_tag();
 
     /* now the exit points */
-    popall_execute_normal_setpc = get_target();
+    popall_execute_normal_setpc = JIT_EXEC_ADDR(get_target());
     uintptr idx = (uintptr) & (regs.pc_p) - (uintptr)&regs;
 #if defined(CPU_AARCH64)
     STR_xXi(REG_WORK1, R_REGSTRUCT, idx);
 #else
     STR_rRI(REG_WORK1, R_REGSTRUCT, idx);
 #endif
-    popall_execute_normal = get_target();
+    popall_execute_normal = JIT_EXEC_ADDR(get_target());
     raw_pop_preserved_regs();
     compemu_raw_jmp((uintptr)execute_normal);
 
-    popall_check_checksum_setpc = get_target();
+    popall_check_checksum_setpc = JIT_EXEC_ADDR(get_target());
 #if defined(CPU_AARCH64)
     STR_xXi(REG_WORK1, R_REGSTRUCT, idx);
 #else
     STR_rRI(REG_WORK1, R_REGSTRUCT, idx);
 #endif
-    popall_check_checksum = get_target();
+    popall_check_checksum = JIT_EXEC_ADDR(get_target());
     raw_pop_preserved_regs();
     compemu_raw_jmp((uintptr)check_checksum);
 
-    popall_exec_nostats_setpc = get_target();
+    popall_exec_nostats_setpc = JIT_EXEC_ADDR(get_target());
 #if defined(CPU_AARCH64)
     STR_xXi(REG_WORK1, R_REGSTRUCT, idx);
 #else
@@ -2452,19 +2509,19 @@ STATIC_INLINE void create_popalls(void)
     raw_pop_preserved_regs();
     compemu_raw_jmp((uintptr)exec_nostats);
 
-    popall_recompile_block = get_target();
+    popall_recompile_block = JIT_EXEC_ADDR(get_target());
     raw_pop_preserved_regs();
     compemu_raw_jmp((uintptr)recompile_block);
 
-    popall_do_nothing = get_target();
+    popall_do_nothing = JIT_EXEC_ADDR(get_target());
     raw_pop_preserved_regs();
     compemu_raw_jmp((uintptr)do_nothing);
 
-    popall_cache_miss = get_target();
+    popall_cache_miss = JIT_EXEC_ADDR(get_target());
     raw_pop_preserved_regs();
     compemu_raw_jmp((uintptr)cache_miss);
 
-    popall_execute_exception = get_target();
+    popall_execute_exception = JIT_EXEC_ADDR(get_target());
     raw_pop_preserved_regs();
     compemu_raw_jmp((uintptr)execute_exception);
 
@@ -2473,7 +2530,13 @@ STATIC_INLINE void create_popalls(void)
 #endif
 
     // no need to further write into popallspace
+#ifdef __ANDROID__
+    // On Android with dual-mapping, the RX view is already set up.
+    // Flush instruction cache to ensure written code is visible for execution.
+    android_jit_flush_cache(popallspace, POPALLSPACE_SIZE);
+#else
 	vm_protect(popallspace, POPALLSPACE_SIZE, VM_PAGE_READ | VM_PAGE_EXECUTE);
+#endif
     // No need to flush. Initialized and not modified
     // flush_cpu_icache((void *)popallspace, (void *)target);
 }
@@ -2493,13 +2556,18 @@ static void prepare_block(blockinfo* bi)
     int i;
 
     set_target(current_compile_p);
-    bi->direct_pen = (cpuop_func*)get_target();
+    bi->direct_pen = (cpuop_func*)JIT_EXEC_ADDR(get_target());
     compemu_raw_execute_normal((uintptr) & (bi->pc_p));
 
-    bi->direct_pcc = (cpuop_func*)get_target();
+    bi->direct_pcc = (cpuop_func*)JIT_EXEC_ADDR(get_target());
     compemu_raw_check_checksum((uintptr) & (bi->pc_p));
 
+#ifdef __ANDROID__
+    // On Android, flush icache using the RX (executable) addresses
+    flush_cpu_icache(jit_rw_to_rx((void*)current_compile_p), jit_rw_to_rx((void*)target));
+#else
     flush_cpu_icache((void*)current_compile_p, (void*)target);
+#endif
     current_compile_p = get_target();
 
     bi->deplist = NULL;
@@ -2832,10 +2900,10 @@ void compile_block(cpu_history* pc_hist, int blocklen, int totcycles)
         /* This is the non-direct handler */
         was_comp = 0;
 
-        bi->direct_handler = (cpuop_func*)get_target();
+        bi->direct_handler = (cpuop_func*)JIT_EXEC_ADDR(get_target());
         set_dhtu(bi, bi->direct_handler);
         bi->status = BI_COMPILING;
-        current_block_start_target = (uintptr)get_target();
+        current_block_start_target = (uintptr)JIT_EXEC_ADDR(get_target());
 
         if (bi->count >= 0) { /* Need to generate countdown code */
             compemu_raw_set_pc_i((uintptr)pc_hist[0].location);
@@ -3047,7 +3115,7 @@ void compile_block(cpu_history* pc_hist, int blocklen, int totcycles)
         current_cache_size += JITPTR get_target() - JITPTR current_compile_p;
 
         /* This is the non-direct handler */
-        bi->handler = bi->handler_to_use = (cpuop_func*)get_target();
+        bi->handler = bi->handler_to_use = (cpuop_func*)JIT_EXEC_ADDR(get_target());
         compemu_raw_cmp_pc((uintptr)pc_hist[0].location);
         compemu_raw_maybe_cachemiss();
         comp_pc_p = (uae_u8*)pc_hist[0].location;
@@ -3059,10 +3127,15 @@ void compile_block(cpu_history* pc_hist, int blocklen, int totcycles)
 
         compemu_raw_jmp((uintptr)bi->direct_handler);
 
+#ifdef __ANDROID__
+        // On Android, flush icache using the RX (executable) addresses
+        flush_cpu_icache(jit_rw_to_rx((void*)current_block_start_target), jit_rw_to_rx((void*)target));
+#else
         flush_cpu_icache((void*)current_block_start_target, (void*)target);
+#endif
         current_compile_p = get_target();
         raise_in_cl_list(bi);
-        bi->nexthandler = current_compile_p;
+        bi->nexthandler = JIT_EXEC_ADDR(current_compile_p);
 
         /* We will flush soon, anyway, so let's do it now */
         if (current_compile_p >= MAX_COMPILE_PTR)

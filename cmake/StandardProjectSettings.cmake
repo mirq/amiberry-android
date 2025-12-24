@@ -45,9 +45,14 @@ if(NOT CMAKE_SYSTEM_NAME MATCHES "Darwin")
             "-Wl,-O1"
             "-Wl,-z,relro"
             "-Wl,-z,now"
-            "-Wl,--sort-common=descending"
-            "-Wl,--hash-style=gnu"
         )
+        # These flags are not supported by Android NDK's LLD linker
+        if(NOT ANDROID)
+            add_link_options(
+                "-Wl,--sort-common=descending"
+                "-Wl,--hash-style=gnu"
+            )
+        endif()
     endif()
 else()
     if(CMAKE_BUILD_TYPE STREQUAL "Release")

@@ -263,6 +263,9 @@ void amiberry_gui_init()
 {
 	AmigaMonitor* mon = &AMonitors[0];
 	sdl_video_driver = SDL_GetCurrentVideoDriver();
+	
+	write_log("amiberry_gui_init: SDL video driver = '%s'\n", sdl_video_driver ? sdl_video_driver : "NULL");
+	write_log("amiberry_gui_init: mon->amiga_window = %p, mon->amiga_renderer = %p\n", mon->amiga_window, mon->amiga_renderer);
 
 	if (sdl_video_driver != nullptr && strcmpi(sdl_video_driver, "KMSDRM") == 0)
 	{
@@ -276,6 +279,21 @@ void amiberry_gui_init()
 			mon->gui_renderer = mon->amiga_renderer;
 		}
 	}
+#ifdef __ANDROID__
+	// Android only supports a single window, reuse the existing Amiga window
+	if (sdl_video_driver != nullptr && strcmpi(sdl_video_driver, "Android") == 0)
+	{
+		android_detected = true;
+		if (!mon->gui_window && mon->amiga_window)
+		{
+			mon->gui_window = mon->amiga_window;
+		}
+		if (!mon->gui_renderer && mon->amiga_renderer)
+		{
+			mon->gui_renderer = mon->amiga_renderer;
+		}
+	}
+#endif
 	SDL_GetCurrentDisplayMode(0, &sdl_mode);
 
 	//-------------------------------------------------
@@ -406,13 +424,21 @@ void amiberry_gui_halt()
 		SDL_DestroyTexture(gui_texture);
 		gui_texture = nullptr;
 	}
-	if (mon->gui_renderer && !kmsdrm_detected)
+	if (mon->gui_renderer && !kmsdrm_detected
+#ifdef __ANDROID__
+		&& !android_detected
+#endif
+	)
 	{
 		SDL_DestroyRenderer(mon->gui_renderer);
 		mon->gui_renderer = nullptr;
 	}
 
-	if (mon->gui_window && !kmsdrm_detected) {
+	if (mon->gui_window && !kmsdrm_detected
+#ifdef __ANDROID__
+		&& !android_detected
+#endif
+	) {
 		regsetint(nullptr, _T("GUIPosX"), gui_window_rect.x);
 		regsetint(nullptr, _T("GUIPosY"), gui_window_rect.y);
 		SDL_DestroyWindow(mon->gui_window);
@@ -1216,6 +1242,10 @@ void disable_resume()
 
 void run_gui()
 {
+#ifdef __ANDROID__
+	SDL_Log("run_gui: ENTER");
+#endif
+	write_log("run_gui: ENTER\n");
 	gui_running = true;
 	gui_rtarea_flags_onenter = gui_create_rtarea_flag(&currprefs);
 
@@ -1223,7 +1253,15 @@ void run_gui()
 
 	try
 	{
+#ifdef __ANDROID__
+		SDL_Log("run_gui: calling amiberry_gui_init");
+#endif
+		write_log("run_gui: calling amiberry_gui_init\n");
 		amiberry_gui_init();
+#ifdef __ANDROID__
+		SDL_Log("run_gui: calling gui_widgets_init");
+#endif
+		write_log("run_gui: calling gui_widgets_init\n");
 		gui_widgets_init();
 		if (_tcslen(startup_message) > 0)
 		{
@@ -1232,9 +1270,25 @@ void run_gui()
 			_tcscpy(startup_message, _T(""));
 			cmdStart->requestFocus();
 		}
+#ifdef __ANDROID__
+		SDL_Log("run_gui: calling amiberry_gui_run (starting main loop)");
+#endif
+		write_log("run_gui: calling amiberry_gui_run (starting main loop)\n");
 		amiberry_gui_run();
+#ifdef __ANDROID__
+		SDL_Log("run_gui: amiberry_gui_run returned, calling gui_widgets_halt");
+#endif
+		write_log("run_gui: amiberry_gui_run returned, calling gui_widgets_halt\n");
 		gui_widgets_halt();
+#ifdef __ANDROID__
+		SDL_Log("run_gui: calling amiberry_gui_halt");
+#endif
+		write_log("run_gui: calling amiberry_gui_halt\n");
 		amiberry_gui_halt();
+#ifdef __ANDROID__
+		SDL_Log("run_gui: amiberry_gui_halt returned");
+#endif
+		write_log("run_gui: amiberry_gui_halt returned\n");
 	}
 
 	// Catch all GUI framework exceptions.

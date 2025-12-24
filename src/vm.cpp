@@ -24,6 +24,69 @@
 #include <sys/sysctl.h>
 #endif
 
+// Android JIT W^X compliance - dual-mapping support
+#ifdef __ANDROID__
+#include "android_jit.h"
+
+// Global pointers for Android JIT dual-mapping
+// When JIT is active, code is written to jit_rw_ptr but executed from jit_rx_ptr
+static void* g_android_jit_rw_ptr = nullptr;
+static void* g_android_jit_rx_ptr = nullptr;
+static size_t g_android_jit_size = 0;
+
+void* android_jit_get_rw_ptr(void) { return g_android_jit_rw_ptr; }
+void* android_jit_get_rx_ptr(void) { return g_android_jit_rx_ptr; }
+size_t android_jit_get_size(void) { return g_android_jit_size; }
+
+/**
+ * Allocate JIT memory with W^X compliance on Android.
+ * Returns the RW pointer (for writing code). The RX pointer can be
+ * obtained via android_jit_get_rx_ptr() or android_jit_rw_to_rx().
+ */
+void* uae_vm_alloc_jit(uae_u32 size, int flags)
+{
+    void* rw_ptr = nullptr;
+    void* rx_ptr = nullptr;
+    
+    // Initialize JIT system if not done
+    android_jit_init();
+    
+    if (android_jit_alloc(size, &rw_ptr, &rx_ptr) != 0) {
+        write_log("VM: Android JIT alloc failed for %u bytes\n", size);
+        return nullptr;
+    }
+    
+    // Store for later lookup
+    g_android_jit_rw_ptr = rw_ptr;
+    g_android_jit_rx_ptr = rx_ptr;
+    g_android_jit_size = size;
+    
+    write_log("VM: Android JIT alloc %u bytes, RW=%p, RX=%p\n", size, rw_ptr, rx_ptr);
+    return rw_ptr;
+}
+
+/**
+ * Free JIT memory allocated with uae_vm_alloc_jit.
+ */
+bool uae_vm_free_jit(void* rw_ptr, int size)
+{
+    if (!rw_ptr) return true;
+    
+    void* rx_ptr = android_jit_rw_to_rx(rw_ptr);
+    android_jit_free(rw_ptr, rx_ptr, size);
+    
+    if (rw_ptr == g_android_jit_rw_ptr) {
+        g_android_jit_rw_ptr = nullptr;
+        g_android_jit_rx_ptr = nullptr;
+        g_android_jit_size = 0;
+    }
+    
+    write_log("VM: Android JIT free %d bytes at RW=%p\n", size, rw_ptr);
+    return true;
+}
+
+#endif /* __ANDROID__ */
+
 //#if defined(LINUX) && defined(CPU_x86_64)
 #if defined(CPU_x86_64) && !defined(__APPLE__) && !defined(_WIN32)
 #define HAVE_MAP_32BIT 1

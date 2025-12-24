@@ -1,0 +1,76 @@
+C/C++ Structured Log8
+6
+4/home/mirek/amiberry-android/amiberry/CMakeLists.txtC
+A
+?com.android.build.gradle.internal.cxx.io.EncodedFileFingerPrint	Ò†´3ü À‰µ…´3p
+n
+l/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/additional_project_files.txt	Ò†´3–Ÿ ¬×–†´3m
+k
+i/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/android_gradle_build.json	Ò†´3ÿ3 ­×–†´3r
+p
+n/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/android_gradle_build_mini.json	Ò†´3¼/ ‚Ø–†´3_
+]
+[/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/build.ninja	Ò†´3Êµd †×–†´3c
+a
+_/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/build.ninja.txt	Ò†´3h
+f
+d/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/build_file_index.txt	Ò†´3¤ ÊÈ‚†´3i
+g
+e/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/compile_commands.json	Ò†´3	íö` „×–†´3m
+k
+i/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/compile_commands.json.bin	Ò†´3
+… °Ï–†´3s
+q
+o/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/metadata_generation_command.txt	Ò†´3¨ ÊÈ‚†´3f
+d
+b/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/prefab_config.json	Ò†´3( ÊÈ‚†´3k
+i
+g/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/symbol_folder_index.txt	Ó†´3f ÊÈ‚†´3B
+@
+>/home/mirek/amiberry-android/amiberry/cmake/Dependencies.cmake	Ó†´3æ- šØı…´3@
+>
+</home/mirek/amiberry-android/amiberry/cmake/FindHelper.cmake	Ó†´3 ğæÃ„´3A
+?
+=/home/mirek/amiberry-android/amiberry/cmake/SourceFiles.cmake	Ó†´3à| ±©‹†´3M
+K
+I/home/mirek/amiberry-android/amiberry/cmake/StandardProjectSettings.cmake	Ó†´3È ğæÃ„´3E
+C
+A/home/mirek/amiberry-android/amiberry/cmake/android/Android.cmake	Ó†´3€# ª†´3F
+D
+B/home/mirek/amiberry-android/amiberry/external/SDL2/CMakeLists.txt	Ó†´3Ûƒ ˆ¬œÇ¤2X
+V
+T/home/mirek/amiberry-android/amiberry/external/SDL2/cmake/CheckCPUArchitecture.cmake	Ó†´3ô ¸™º„Ë0J
+H
+F/home/mirek/amiberry-android/amiberry/external/SDL2/cmake/macros.cmake	Ó†´3Ï# ˜†¾ÃÀ1M
+K
+I/home/mirek/amiberry-android/amiberry/external/SDL2/cmake/sdlchecks.cmake	Ó†´3Øü ˆ™üö2K
+I
+G/home/mirek/amiberry-android/amiberry/external/SDL2/cmake/sdlfind.cmake	Ó†´3Ö èò¥šĞ0O
+M
+K/home/mirek/amiberry-android/amiberry/external/SDL2/cmake/sdlplatform.cmake	Ó†´3 ¸˜Á´®1P
+N
+L/home/mirek/amiberry-android/amiberry/external/SDL2/cmake_uninstall.cmake.in	Ó†´3Ş ÈË‰Šñ+R
+P
+N/home/mirek/amiberry-android/amiberry/external/SDL2/include/SDL_config.h.cmake	Ó†´3Í¶ ¨Ÿ°ã1T
+R
+P/home/mirek/amiberry-android/amiberry/external/SDL2/include/SDL_revision.h.cmake	Ó†´3Ö °–”„À0L
+J
+H/home/mirek/amiberry-android/amiberry/external/SDL2_image/CMakeLists.txt	Ó†´3–‘ ˜õÎ·Ì1]
+[
+Y/home/mirek/amiberry-android/amiberry/external/SDL2_image/cmake/PrivateSdlFunctions.cmake	Ó†´3—b ØğÿİÁ1J
+H
+F/home/mirek/amiberry-android/amiberry/external/SDL2_ttf/CMakeLists.txt	Ó†´3Š~ ¨Û‡äÒ1[
+Y
+W/home/mirek/amiberry-android/amiberry/external/SDL2_ttf/cmake/PrivateSdlFunctions.cmake	Ó†´3—b ¸ íóĞ1\
+Z
+X/home/mirek/amiberry-android/amiberry/external/SDL2_ttf/external/freetype/CMakeLists.txt	Ó†´3 ­ €’ˆäÒ1K
+I
+G/home/mirek/amiberry-android/amiberry/external/capsimage/CMakeLists.txt	Ó†´3!Ò ˜çÃ„´3K
+I
+G/home/mirek/amiberry-android/amiberry/external/libguisan/CMakeLists.txt	Ó†´3"€ §çÃ„´3I
+G
+E/home/mirek/amiberry-android/amiberry/external/mt32emu/CMakeLists.txt	Ó†´3#Ñ‚ ¸çÃ„´3S
+Q
+O/home/mirek/amiberry-android/amiberry/external/mt32emu/cmake/project_data.cmake	Ó†´3$µ ºçÃ„´3B
+@
+>/home/mirek/amiberry-android/amiberry/packaging/CMakeLists.txt	Ó†´3% ÆçÃ„´3

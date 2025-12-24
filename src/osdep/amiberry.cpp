@@ -42,6 +42,8 @@
 #include "gfxboard.h"
 #include "devices.h"
 #include <map>
+#include <unordered_map>
+#include <functional>
 #include "ioport.h"
 #include <parser.h>
 #include <sstream>
@@ -84,6 +86,18 @@ struct gpiod_line* lineYellow; // Yellow LED
 
 #ifdef USE_DBUS
 #include "amiberry_dbus.h"
+#endif
+
+#ifdef __ANDROID__
+#include <SDL.h>
+#include <android/asset_manager.h>
+#include <android/asset_manager_jni.h>
+#include "android/android_vjoystick.h"
+#include "vkbd/vkbd.h"
+// Global paths set by Android initialization
+static std::string android_internal_path;  // App's private internal storage
+static std::string android_data_path;      // App assets (fonts, vkbd, etc.)
+static std::string android_user_data_path; // User-selected data folder (ROMs, floppies, etc.)
 #endif
 
 static SDL_threadID mainthreadid;
@@ -1952,6 +1966,26 @@ static void process_event(const SDL_Event& event)
 
 		case SDL_FINGERDOWN:
 		case SDL_FINGERUP:
+#ifdef __ANDROID__
+			// Check if overlay toggle button was pressed
+			if (event.type == SDL_FINGERDOWN && android_overlay_button_handle_touch(event)) {
+				android_overlay_cycle();
+				// If switching to keyboard mode, toggle VKBD
+				if (android_overlay_get_state() == OVERLAY_KEYBOARD) {
+					if (vkbd_allowed(0) && !vkbd_is_active()) {
+						vkbd_toggle();
+					}
+				} else if (vkbd_is_active()) {
+					// If leaving keyboard mode, hide VKBD
+					vkbd_toggle();
+				}
+				break;
+			}
+			// Check if virtual joystick handles this touch
+			if (android_vjoystick_handle_touch(event)) {
+				break;
+			}
+#endif
 			handle_finger_event(event);
 			break;
 
@@ -1961,6 +1995,12 @@ static void process_event(const SDL_Event& event)
 			break;
 
 		case SDL_FINGERMOTION:
+#ifdef __ANDROID__
+			// Let virtual joystick handle motion if active
+			if (android_vjoystick_handle_touch(event)) {
+				break;
+			}
+#endif
 			handle_finger_motion_event(event);
 			break;
 
@@ -2563,7 +2603,11 @@ void target_default_options(uae_prefs* p, const int type)
 	drawbridge_update_profiles(p);
 
 	p->alt_tab_release = false;
+#ifdef __ANDROID__
+	p->sound_pullmode = 0;  // Push mode works better on Android
+#else
 	p->sound_pullmode = amiberry_options.default_sound_pull;
+#endif
 
 	p->use_retroarch_quit = amiberry_options.default_retroarch_quit;
 	p->use_retroarch_menu = amiberry_options.default_retroarch_menu;
@@ -4073,6 +4117,21 @@ void download_rtb(const std::string& filename)
 // this is where the required assets are stored, like fonts, icons, etc.
 std::string get_data_directory(bool portable_mode)
 {
+#ifdef __ANDROID__
+	// On Android, data is extracted from APK assets to internal storage
+	if (!android_data_path.empty())
+	{
+		write_log("Using Android data directory: %s\n", android_data_path.c_str());
+		return android_data_path;
+	}
+	// Fallback: try SDL internal storage path
+	const char* path = SDL_AndroidGetInternalStoragePath();
+	if (path != nullptr)
+	{
+		write_log("Using Android internal storage for data: %s\n", path);
+		return std::string(path) + "/data/";
+	}
+#endif
 #ifdef __MACH__
 	char exepath[MAX_DPATH];
 	uint32_t size = sizeof exepath;
@@ -4131,6 +4190,28 @@ std::string get_data_directory(bool portable_mode)
 // Kickstart ROMs, HDD images, Floppy images will live under this directory
 std::string get_home_directory(const bool portable_mode)
 {
+#ifdef __ANDROID__
+	// On Android, use the user-selected data path
+	// This is set by AmiberryActivity on first run
+	SDL_Log("get_home_directory called, android_user_data_path='%s'", android_user_data_path.c_str());
+	if (!android_user_data_path.empty())
+	{
+		SDL_Log("Returning android_user_data_path: %s", android_user_data_path.c_str());
+		return android_user_data_path;
+	}
+	// Fallback to internal storage if user path not set
+	if (!android_internal_path.empty())
+	{
+		SDL_Log("Fallback: returning android_internal_path: %s", android_internal_path.c_str());
+		return android_internal_path;
+	}
+	const char* path = SDL_AndroidGetInternalStoragePath();
+	if (path != nullptr)
+	{
+		SDL_Log("Fallback: returning SDL_AndroidGetInternalStoragePath: %s", path);
+		return std::string(path);
+	}
+#endif
 	if (portable_mode)
 	{
 		// Portable mode, all in startup path
@@ -4173,6 +4254,17 @@ std::string get_home_directory(const bool portable_mode)
 // The location of .uae configurations
 std::string get_config_directory(bool portable_mode)
 {
+#ifdef __ANDROID__
+	// On Android, config goes in the user-selected data path
+	if (!android_user_data_path.empty())
+	{
+		return android_user_data_path + "/conf";
+	}
+	if (!android_internal_path.empty())
+	{
+		return android_internal_path + "/conf";
+	}
+#endif
 #ifdef __MACH__
 	const auto user_home_dir = getenv("HOME");
 	if (!directory_exists(user_home_dir, "/Amiberry"))
@@ -4223,6 +4315,13 @@ std::string get_config_directory(bool portable_mode)
 // Plugins that Amiberry can use, usually in the form of shared libraries
 std::string get_plugins_directory(bool portable_mode)
 {
+#ifdef __ANDROID__
+	// On Android, plugins go in internal storage (app-private, not user-visible)
+	if (!android_internal_path.empty())
+	{
+		return android_internal_path + "/plugins";
+	}
+#endif
 #ifdef __MACH__
 	char exepath[MAX_DPATH];
 	uint32_t size = sizeof exepath;
@@ -4496,22 +4595,28 @@ void create_missing_amiberry_folders()
 static bool locate_amiberry_conf(const bool portable_mode)
 {
 	config_path = get_config_directory(portable_mode);
-#ifdef __MACH__
+#ifdef __ANDROID__
+	// On Android, always use config_path which is set by get_config_directory()
+	// This points to user-selected folder + "/conf"
+	if (!my_existsdir(config_path.c_str()))
+		my_mkdir(config_path.c_str());
+	amiberry_conf_file = config_path + "/amiberry.conf";
+	amiberry_ini_file = config_path + "/amiberry.ini";
+#elif defined(__MACH__)
 	if constexpr (true)
+	{
+		amiberry_conf_file = config_path + "/amiberry.conf";
+		amiberry_ini_file = config_path + "/amiberry.ini";
+	}
 #else
 	if (portable_mode)
-#endif
 	{
 		amiberry_conf_file = config_path + "/amiberry.conf";
 		amiberry_ini_file = config_path + "/amiberry.ini";
 	}
 	else
 	{
-#ifdef __MACH__
-		const std::string amiberry_dir = "Amiberry";
-#else
 		const std::string amiberry_dir = "amiberry";
-#endif
 		std::string xdg_config_home = get_xdg_config_home();
 		if (!my_existsdir(xdg_config_home.c_str()))
 			my_mkdir(xdg_config_home.c_str());
@@ -4522,6 +4627,7 @@ static bool locate_amiberry_conf(const bool portable_mode)
 		amiberry_conf_file = xdg_config_home + "/amiberry.conf";
 		amiberry_ini_file = xdg_config_home + "/amiberry.ini";
 	}
+#endif
 	return my_existsfile2(amiberry_conf_file.c_str());
 }
 
@@ -4536,6 +4642,22 @@ static void init_amiberry_dirs(const bool portable_mode)
 	data_dir = get_data_directory(portable_mode);
 	plugins_dir = get_plugins_directory(portable_mode);
 
+#ifdef __ANDROID__
+	// On Android, use user-selected path for user data, internal storage for app data
+	themes_path = config_path;
+	
+	// Controllers go in internal storage (shipped with app)
+	controllers_path = android_internal_path;
+	
+	// User data paths - all in user-selected folder
+	whdboot_path = saveimage_dir = savestate_dir =
+	ripper_path = input_dir = screenshot_dir = nvram_dir = video_dir =
+	home_dir;
+
+	whdload_arch_path = floppy_path = harddrive_path =
+	cdrom_path = logfile_path = rom_path = rp9_path =
+	home_dir;
+#else // !__ANDROID__
 #ifdef __MACH__
 	if constexpr (true)
 #else
@@ -4590,6 +4712,7 @@ static void init_amiberry_dirs(const bool portable_mode)
 		savestate_dir = cdrom_path = logfile_path = rom_path = rp9_path =
 		home_dir;
 	}
+#endif // !__ANDROID__
 
 #ifdef __MACH__
 	controllers_path.append("/Controllers/");
@@ -4634,6 +4757,24 @@ static void init_amiberry_dirs(const bool portable_mode)
 
 	floppy_sounds_dir = data_dir;
 	floppy_sounds_dir.append("floppy_sounds/");
+
+#ifdef __ANDROID__
+	// Debug logging to verify all paths are correctly set
+	SDL_Log("=== init_amiberry_dirs paths ===");
+	SDL_Log("home_dir: %s", home_dir.c_str());
+	SDL_Log("data_dir: %s", data_dir.c_str());
+	SDL_Log("config_path: %s", config_path.c_str());
+	SDL_Log("plugins_dir: %s", plugins_dir.c_str());
+	SDL_Log("controllers_path: %s", controllers_path.c_str());
+	SDL_Log("rom_path: %s", rom_path.c_str());
+	SDL_Log("floppy_path: %s", floppy_path.c_str());
+	SDL_Log("nvram_dir: %s", nvram_dir.c_str());
+	SDL_Log("savestate_dir: %s", savestate_dir.c_str());
+	SDL_Log("themes_path: %s", themes_path.c_str());
+	SDL_Log("amiberry_conf_file: %s", amiberry_conf_file.c_str());
+	SDL_Log("amiberry_ini_file: %s", amiberry_ini_file.c_str());
+	SDL_Log("================================");
+#endif
 }
 
 void load_amiberry_settings()
@@ -4924,8 +5065,319 @@ static void makeverstr(TCHAR* s)
 	}
 }
 
+#ifdef __ANDROID__
+#include <sys/stat.h>
+#include <jni.h>
+
+// Copy a single file from Android assets to internal storage
+static bool android_copy_asset_file(const std::string& asset_path, const std::string& dest_path)
+{
+	SDL_RWops* src = SDL_RWFromFile(asset_path.c_str(), "rb");
+	if (!src) {
+		write_log("Failed to open asset: %s\n", asset_path.c_str());
+		return false;
+	}
+
+	Sint64 size = SDL_RWsize(src);
+	if (size <= 0) {
+		SDL_RWclose(src);
+		write_log("Asset size invalid: %s\n", asset_path.c_str());
+		return false;
+	}
+
+	std::vector<char> buffer(size);
+	if (SDL_RWread(src, buffer.data(), 1, size) != static_cast<size_t>(size)) {
+		SDL_RWclose(src);
+		write_log("Failed to read asset: %s\n", asset_path.c_str());
+		return false;
+	}
+	SDL_RWclose(src);
+
+	FILE* dest = fopen(dest_path.c_str(), "wb");
+	if (!dest) {
+		write_log("Failed to create file: %s\n", dest_path.c_str());
+		return false;
+	}
+
+	size_t written = fwrite(buffer.data(), 1, size, dest);
+	fclose(dest);
+
+	if (written != static_cast<size_t>(size)) {
+		write_log("Failed to write file: %s\n", dest_path.c_str());
+		return false;
+	}
+
+	return true;
+}
+
+// Recursively create directory
+static void android_mkdir_recursive(const std::string& path)
+{
+	size_t pos = 0;
+	while ((pos = path.find('/', pos + 1)) != std::string::npos) {
+		std::string sub = path.substr(0, pos);
+		mkdir(sub.c_str(), 0755);
+	}
+	mkdir(path.c_str(), 0755);
+}
+
+// Copy a file from source to destination
+static bool android_copy_file(const std::string& src, const std::string& dest)
+{
+	FILE* src_file = fopen(src.c_str(), "rb");
+	if (!src_file) {
+		write_log("android_copy_file: Cannot open source: %s\n", src.c_str());
+		return false;
+	}
+	
+	FILE* dest_file = fopen(dest.c_str(), "wb");
+	if (!dest_file) {
+		fclose(src_file);
+		write_log("android_copy_file: Cannot create destination: %s\n", dest.c_str());
+		return false;
+	}
+	
+	char buffer[8192];
+	size_t bytes;
+	while ((bytes = fread(buffer, 1, sizeof(buffer), src_file)) > 0) {
+		if (fwrite(buffer, 1, bytes, dest_file) != bytes) {
+			fclose(src_file);
+			fclose(dest_file);
+			write_log("android_copy_file: Write error: %s\n", dest.c_str());
+			return false;
+		}
+	}
+	
+	fclose(src_file);
+	fclose(dest_file);
+	return true;
+}
+
+// List of essential data files to copy from assets
+static const char* essential_data_files[] = {
+	"AmigaTopaz.ttf",
+	"amiberry-logo.png",
+	"amiberry.png",
+	"35floppy.png",
+	"amigainfo.png",
+	"axis.png",
+	"button.png",
+	"chip.png",
+	"controller.png",
+	"controllermap.png",
+	"controllermap_back.png",
+	"cpu.png",
+	"cursor.bmp",
+	"delete.png",
+	"drive.png",
+	"expansion.png",
+	"file.png",
+	"fixedfont.png",
+	"joystick.png",
+	"keyboard.png",
+	"misc.png",
+	"paths.png",
+	"port.png",
+	"quickstart.png",
+	"rpgfont.png",
+	"savestate.png",
+	"screen.png",
+	"sound.png",
+	nullptr
+};
+
+static const char* essential_vkbd_files[] = {
+	"vkbd/vkbd_button.png",
+	"vkbd/vkbd_key.png",
+	"vkbd/vkbd_small.png",
+	"vkbd/vkbd_wide.png",
+	"vkbd/vkbd_shift.png",
+	"vkbd/vkbd_backspace.png",
+	"vkbd/vkbd_space.png",
+	"vkbd/vkbd_enter.png",
+	"vkbd/vkbd_left.png",
+	"vkbd/vkbd_right.png",
+	"vkbd/vkbd_up.png",
+	"vkbd/vkbd_down.png",
+	nullptr
+};
+
+// Read user-selected data path from config file written by Java
+static std::string read_android_user_data_path(const std::string& internal_path)
+{
+	std::string config_file = internal_path + "/user_data_path.txt";
+	SDL_Log("Looking for user data path config at: %s", config_file.c_str());
+	
+	FILE* f = fopen(config_file.c_str(), "r");
+	if (f) {
+		char buffer[MAX_DPATH];
+		if (fgets(buffer, sizeof(buffer), f)) {
+			// Remove trailing newline/whitespace
+			char* p = buffer + strlen(buffer) - 1;
+			while (p >= buffer && (*p == '\n' || *p == '\r' || *p == ' ')) {
+				*p-- = '\0';
+			}
+			fclose(f);
+			
+			SDL_Log("Read path from config: '%s'", buffer);
+			
+			// Verify directory exists and is accessible
+			if (strlen(buffer) > 0 && my_existsdir(buffer)) {
+				SDL_Log("User data path verified: %s", buffer);
+				return std::string(buffer);
+			} else {
+				SDL_Log("User data path not accessible: %s", buffer);
+			}
+		} else {
+			SDL_Log("Failed to read from config file");
+			fclose(f);
+		}
+	} else {
+		SDL_Log("Config file not found: %s", config_file.c_str());
+	}
+	SDL_Log("No user data path configured");
+	return "";
+}
+
+// Initialize Android paths and extract assets
+static void android_init()
+{
+	const char* internal_path = SDL_AndroidGetInternalStoragePath();
+	if (!internal_path) {
+		SDL_Log("ERROR: Could not get Android internal storage path!");
+		return;
+	}
+
+	android_internal_path = std::string(internal_path);
+	android_data_path = android_internal_path + "/data/";
+	
+	SDL_Log("Android internal storage: %s", android_internal_path.c_str());
+	
+	// Read user-selected data path (set by AmiberryActivity on first run)
+	android_user_data_path = read_android_user_data_path(android_internal_path);
+	
+	SDL_Log("After read_android_user_data_path: '%s'", android_user_data_path.c_str());
+	
+	// If no user data path, use internal storage as fallback
+	// (This shouldn't happen if AmiberryActivity is working correctly)
+	if (android_user_data_path.empty()) {
+		SDL_Log("WARNING: No user data path set, using internal storage");
+		android_user_data_path = android_internal_path;
+	}
+
+	SDL_Log("Android data path (assets): %s", android_data_path.c_str());
+	SDL_Log("Android user data path: %s", android_user_data_path.c_str());
+
+	// Create directories in internal storage for app assets
+	android_mkdir_recursive(android_data_path);
+	android_mkdir_recursive(android_data_path + "vkbd");
+	android_mkdir_recursive(android_internal_path + "/controllers");
+	
+	// Create directories in user data path for user files
+	// (These should already exist from AmiberryActivity, but ensure they do)
+	android_mkdir_recursive(android_user_data_path + "/conf");
+	android_mkdir_recursive(android_user_data_path + "/roms");
+	android_mkdir_recursive(android_user_data_path + "/floppies");
+	android_mkdir_recursive(android_user_data_path + "/harddrives");
+	android_mkdir_recursive(android_user_data_path + "/cdroms");
+	android_mkdir_recursive(android_user_data_path + "/savestates");
+	android_mkdir_recursive(android_user_data_path + "/screenshots");
+	android_mkdir_recursive(android_user_data_path + "/nvram");
+	android_mkdir_recursive(android_user_data_path + "/lha");
+	android_mkdir_recursive(android_user_data_path + "/rp9");
+	android_mkdir_recursive(android_user_data_path + "/inputrecordings");
+	android_mkdir_recursive(android_user_data_path + "/whdboot");
+
+	// Check if we need to extract assets (check for marker file)
+	// We use a version marker so we can re-extract if assets change
+	std::string marker_file = android_internal_path + "/.assets_extracted_v2";
+	FILE* marker = fopen(marker_file.c_str(), "r");
+	if (marker) {
+		fclose(marker);
+		write_log("Assets already extracted, skipping...\n");
+		
+		// Still need to check if AROS ROMs need to be copied to user data path
+		// (in case user selected a new folder)
+		std::string user_aros_rom = android_user_data_path + "/roms/aros-rom.bin";
+		if (!my_existsfile(user_aros_rom.c_str())) {
+			write_log("Copying AROS ROMs to user data path...\n");
+			std::string src_aros_rom = android_internal_path + "/roms/aros-rom.bin";
+			std::string src_aros_ext = android_internal_path + "/roms/aros-ext.bin";
+			if (my_existsfile(src_aros_rom.c_str())) {
+				android_copy_file(src_aros_rom, user_aros_rom);
+			}
+			if (my_existsfile(src_aros_ext.c_str())) {
+				android_copy_file(src_aros_ext, android_user_data_path + "/roms/aros-ext.bin");
+			}
+		}
+		return;
+	}
+
+	write_log("Extracting assets from APK...\n");
+
+	// Copy essential data files (fonts, etc.) to internal storage
+	for (int i = 0; essential_data_files[i] != nullptr; i++) {
+		std::string asset = essential_data_files[i];
+		std::string dest = android_data_path + asset;
+		if (android_copy_asset_file(asset, dest)) {
+			write_log("Extracted: %s\n", asset.c_str());
+		}
+	}
+
+	// Copy VKBD files to internal storage
+	for (int i = 0; essential_vkbd_files[i] != nullptr; i++) {
+		std::string asset = essential_vkbd_files[i];
+		std::string dest = android_data_path + asset;
+		if (android_copy_asset_file(asset, dest)) {
+			write_log("Extracted: %s\n", asset.c_str());
+		}
+	}
+
+	// Copy controller database to internal storage
+	if (android_copy_asset_file("controllers/gamecontrollerdb.txt",
+		android_internal_path + "/controllers/gamecontrollerdb.txt")) {
+		write_log("Extracted: controllers/gamecontrollerdb.txt\n");
+	}
+
+	// Copy AROS ROMs to internal storage first (as backup)
+	android_mkdir_recursive(android_internal_path + "/roms");
+	if (android_copy_asset_file("roms/aros-rom.bin",
+		android_internal_path + "/roms/aros-rom.bin")) {
+		write_log("Extracted to internal: roms/aros-rom.bin\n");
+	}
+	if (android_copy_asset_file("roms/aros-ext.bin",
+		android_internal_path + "/roms/aros-ext.bin")) {
+		write_log("Extracted to internal: roms/aros-ext.bin\n");
+	}
+	
+	// Also copy AROS ROMs to user data path so they're visible to user
+	std::string user_roms_path = android_user_data_path + "/roms/";
+	if (android_copy_asset_file("roms/aros-rom.bin", user_roms_path + "aros-rom.bin")) {
+		write_log("Extracted to user path: roms/aros-rom.bin\n");
+	}
+	if (android_copy_asset_file("roms/aros-ext.bin", user_roms_path + "aros-ext.bin")) {
+		write_log("Extracted to user path: roms/aros-ext.bin\n");
+	}
+
+	// Create marker file
+	marker = fopen(marker_file.c_str(), "w");
+	if (marker) {
+		fprintf(marker, "2\n");
+		fclose(marker);
+	}
+
+	write_log("Asset extraction complete.\n");
+}
+#endif // __ANDROID__
+
 int main(int argc, char* argv[])
 {
+#ifdef __ANDROID__
+	// Initialize Android paths and extract assets FIRST
+	// This must happen before any path operations
+	android_init();
+#endif
+
 	makeverstr(VersionStr);
 
 	for (auto i = 1; i < argc; i++) {
@@ -5036,6 +5488,20 @@ int main(int argc, char* argv[])
 		return 0;
 	uae_time_calibrate();
 	
+#ifdef __ANDROID__
+	// Disable accelerometer and gyroscope as joystick input on Android
+	// These hints must be set before SDL_Init
+	SDL_SetHint(SDL_HINT_ACCELEROMETER_AS_JOYSTICK, "0");
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS4_RUMBLE, "0");
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "0");
+	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STEAM, "0");
+	SDL_SetHint(SDL_HINT_TV_REMOTE_AS_JOYSTICK, "0");
+	
+	// Force OpenSL ES audio driver (AAudio MMAP has issues in Android emulator)
+	SDL_SetHint(SDL_HINT_AUDIODRIVER, "openslES");
+	SDL_SetHint(SDL_HINT_ANDROID_BLOCK_ON_PAUSE_PAUSEAUDIO, "1");
+#endif
+	
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)
 	{
 		write_log("SDL could not initialize! SDL_Error: %s\n", SDL_GetError());
@@ -5068,7 +5534,7 @@ int main(int argc, char* argv[])
 	normalcursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
 	clipboard_init();
 
-#if defined( __linux__)
+#if defined(__linux__) && !defined(__ANDROID__)
 	// set capslock state based upon current "real" state
 	ioctl(0, KDGKBLED, &kbd_flags);
 	ioctl(0, KDGETLED, &kbd_led_status);

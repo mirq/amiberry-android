@@ -34,9 +34,11 @@
 #include "rp.h"
 #endif
 
+#ifndef ANDROID_NO_FLAC
 #define FLAC__NO_DLL
-#include "zarchive.h"
 #include "FLAC/stream_decoder.h"
+#endif
+#include "zarchive.h"
 
 #ifdef WITH_CHD
 #include "archivers/chd/chd.h"
@@ -190,6 +192,7 @@ static int do_read (struct cdunit *cdu, struct cdtoc *t, uae_u8 *data, int secto
 	return 0;
 }
 
+#ifndef ANDROID_NO_FLAC
 // WOHOO, library that supports virtual file access functions. Perfect!
 static void flac_metadata_callback (const FLAC__StreamDecoder *decoder, const FLAC__StreamMetadata *metadata, void *client_data)
 {
@@ -279,6 +282,7 @@ static uae_u8 *flac_get_data (struct cdtoc *t)
 	}
 	return t->data;
 }
+#endif /* ANDROID_NO_FLAC */
 
 void sub_to_interleaved (const uae_u8 *s, uae_u8 *d)
 {
@@ -408,7 +412,11 @@ static int cdda_unpack_func (void *v)
 			uae_u8 b;
 			zfile_fread (&b, 1, 1, t->handle);
 			zfile_fseek (t->handle, pos, SEEK_SET);
-			if (!t->data && (t->enctype == AUDENC_MP3 || t->enctype == AUDENC_FLAC)) {
+			if (!t->data && (t->enctype == AUDENC_MP3
+#ifndef ANDROID_NO_FLAC
+			|| t->enctype == AUDENC_FLAC
+#endif
+			)) {
 				t->data = xcalloc (uae_u8, (int)t->filesize + 2352);
 				cdimage_unpack_active = 1;
 				if (t->data) {
@@ -420,9 +428,12 @@ static int cdda_unpack_func (void *v)
 						}
 						if (mp3dec)
 							t->data = mp3dec->get (t->handle, t->data, (int)t->filesize);
-					} else if (t->enctype == AUDENC_FLAC) {
+					}
+#ifndef ANDROID_NO_FLAC
+					else if (t->enctype == AUDENC_FLAC) {
 						flac_get_data (t);
 					}
+#endif
 				}
 			}
 		}
@@ -650,7 +661,11 @@ static bool cdda_play_func2 (struct cdunit *cdu, int *outpos)
 							int totalsize = t->size + t->skipsize;
 							int offset = (int)t->offset;
 							if (offset >= 0) {
-								if ((t->enctype == AUDENC_MP3 || t->enctype == AUDENC_FLAC) && t->data) {
+								if ((t->enctype == AUDENC_MP3
+#ifndef ANDROID_NO_FLAC
+									|| t->enctype == AUDENC_FLAC
+#endif
+									) && t->data) {
 									if (t->filesize >= sector * totalsize + offset + t->size)
 										memcpy (dst, t->data + sector * totalsize + offset, t->size);
 								} else if (t->enctype == AUDENC_PCM) {
@@ -1728,8 +1743,10 @@ static int parsecue (struct cdunit *cdu, struct zfile *zcue, const TCHAR *img, c
 			fnametypeid = AUDENC_PCM;
 			if (!_tcsicmp (fnametype, _T("MP3")) || (ext && !_tcsicmp(ext, _T("MP3"))))
 				fnametypeid = AUDENC_MP3;
+#ifndef ANDROID_NO_FLAC
 			else if (!_tcsicmp (fnametype, _T("FLAC")) || (ext && !_tcsicmp(ext, _T("FLAC"))))
 				fnametypeid = AUDENC_FLAC;
+#endif
 			fileoffset = 0;
 			newfile = 1;
 			ctrl = 0;
@@ -1927,11 +1944,14 @@ static int parsecue (struct cdunit *cdu, struct zfile *zcue, const TCHAR *img, c
 							if (t->filesize)
 								t->enctype = fnametypeid;
 						}
-					} else if (fnametypeid == AUDENC_FLAC && t->handle) {
+					}
+#ifndef ANDROID_NO_FLAC
+					else if (fnametypeid == AUDENC_FLAC && t->handle) {
 						flac_get_size (t);
 						if (t->filesize)
 							t->enctype = fnametypeid;
 					}
+#endif
 				}
 			}
 		}

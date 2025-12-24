@@ -1,0 +1,436 @@
+ninja: Entering directory `/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a'
+[1/703] Building CXX object CMakeFiles/amiberry.dir/src/ethernet.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/ethernet.cpp:2:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/ethernet.cpp:2:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/ethernet.cpp:2:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/ethernet.cpp:2:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/ethernet.cpp:3:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+5 warnings generated.
+[2/703] Building CXX object CMakeFiles/amiberry.dir/src/events.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/events.cpp:11:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/events.cpp:11:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/events.cpp:11:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/events.cpp:11:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/events.cpp:12:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+5 warnings generated.
+[3/703] Building CXX object CMakeFiles/amiberry.dir/src/custom.cpp.o
+FAILED: CMakeFiles/amiberry.dir/src/custom.cpp.o 
+/home/mirek/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/bin/clang++ --target=aarch64-none-linux-android30 --sysroot=/home/mirek/Android/Sdk/ndk/25.1.8937393/toolchains/llvm/prebuilt/linux-x86_64/sysroot -DAMIBERRY -DAMIBERRY_DATADIR=\"/usr/local/share/amiberry\" -DAMIBERRY_LIBDIR=\"/usr/local/lib/amiberry\" -DAMIBERRY_VERSION=\"8.0.0\" -DAMIBERRY_VERSION_PRE_RELEASE=\"11\" -DANDROID -DANDROID_NO_DBUS -DANDROID_NO_FLOPPYBRIDGE -DANDROID_NO_GPIO -DANDROID_NO_PCAP -DANDROID_NO_PORTMIDI -DANDROID_NO_SERIALPORT -DARMV8 -DCPU_64_BIT -DCPU_AARCH64 -DUSE_PCEM -DUSE_ZSTD -D_FILE_OFFSET_BITS=64 -D__ANDROID__ -Damiberry_EXPORTS -I/home/mirek/amiberry-android/amiberry/android/app/src/main/jni -I/home/mirek/amiberry-android/amiberry/src -I/home/mirek/amiberry-android/amiberry/src/osdep -I/home/mirek/amiberry-android/amiberry/src/include -I/home/mirek/amiberry-android/amiberry/src/threaddep -I/home/mirek/amiberry-android/amiberry/src/archivers -I/home/mirek/amiberry-android/amiberry/src/ppc/pearpc -I/home/mirek/amiberry-android/amiberry/external/libguisan/include -I/home/mirek/amiberry-android/amiberry/external/mt32emu/src -I/home/mirek/amiberry-android/amiberry/external/floppybridge/src -I/home/mirek/amiberry-android/amiberry/external/SDL2/include -I/home/mirek/amiberry-android/amiberry/external/SDL2_image/include -I/home/mirek/amiberry-android/amiberry/external/SDL2_ttf -I/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/SDL2/include -I/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/SDL2/include/SDL2 -I/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/SDL2/include-config-debug/SDL2 -I/home/mirek/amiberry-android/amiberry/android/app/.cxx/Debug/2h3d1g1b/arm64-v8a/external/mt32emu/include -fno-limit-debug-info  -fPIC -march=armv8-a -mtune=cortex-a53 -fomit-frame-pointer -fno-strict-aliasing -ffast-math -pipe -Og -funwind-tables -DDEBUG -g -fno-pie -fPIE -std=gnu++17 -MD -MT CMakeFiles/amiberry.dir/src/custom.cpp.o -MF CMakeFiles/amiberry.dir/src/custom.cpp.o.d -o CMakeFiles/amiberry.dir/src/custom.cpp.o -c /home/mirek/amiberry-android/amiberry/src/custom.cpp
+In file included from /home/mirek/amiberry-android/amiberry/src/custom.cpp:13:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/custom.cpp:13:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/custom.cpp:13:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/custom.cpp:13:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/custom.cpp:14:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+/home/mirek/amiberry-android/amiberry/src/custom.cpp:1735:21: warning: comparison of array 'cr->label' not equal to a null pointer is always true [-Wtautological-pointer-compare]
+                cr != NULL && cr->label != NULL ? cr->label : _T("<?>"),
+                              ~~~~^~~~~    ~~~~
+/home/mirek/amiberry-android/amiberry/src/custom.cpp:3135:13: warning: 22 enumeration values not handled in switch: 'COP_stop', 'COP_waitforever', 'COP_bltwait'... [-Wswitch]
+                                switch (cop_state.state_prev)
+                                        ^~~~~~~~~~~~~~~~~~~~
+/home/mirek/amiberry-android/amiberry/src/custom.cpp:3394:2: error: use of undeclared identifier 'serial_rbf_change'
+        serial_rbf_change((newreq & 0x0800) ? 1 : 0);
+        ^
+/home/mirek/amiberry-android/amiberry/src/custom.cpp:7732:21: warning: implicit conversion of NULL constant to 'uaecptr' (aka 'unsigned int') [-Wnull-conversion]
+                        write_drga(addr, NULL, v);
+                        ~~~~~~~~~~       ^~~~
+                                         0
+/home/mirek/amiberry-android/amiberry/src/custom.cpp:9456:12: warning: 19 enumeration values not handled in switch: 'COP_stop', 'COP_waitforever', 'COP_bltwait'... [-Wswitch]
+                        switch (cop_state.state)
+                                ^~~~~~~~~~~~~~~
+/home/mirek/amiberry-android/amiberry/src/custom.cpp:11273:8: warning: use of logical '||' with constant operand [-Wconstant-logical-operand]
+        if (0 || 1)
+              ^  ~
+/home/mirek/amiberry-android/amiberry/src/custom.cpp:11273:8: note: use '|' for a bitwise operation
+        if (0 || 1)
+              ^~
+              |
+10 warnings and 1 error generated.
+[4/703] Building CXX object CMakeFiles/amiberry.dir/src/fdi2raw.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/fdi2raw.cpp:37:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fdi2raw.cpp:37:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fdi2raw.cpp:37:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fdi2raw.cpp:37:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fdi2raw.cpp:38:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+5 warnings generated.
+[5/703] Building CXX object CMakeFiles/amiberry.dir/src/flashrom.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/flashrom.cpp:11:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/flashrom.cpp:11:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/flashrom.cpp:11:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/flashrom.cpp:11:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/flashrom.cpp:12:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+5 warnings generated.
+[6/703] Building CXX object CMakeFiles/amiberry.dir/src/framebufferboards.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/framebufferboards.cpp:10:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/framebufferboards.cpp:10:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/framebufferboards.cpp:10:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/framebufferboards.cpp:10:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/framebufferboards.cpp:11:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+5 warnings generated.
+[7/703] Building CXX object CMakeFiles/amiberry.dir/src/fpp_native.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp_native.cpp:17:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp_native.cpp:17:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp_native.cpp:17:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp_native.cpp:17:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp_native.cpp:18:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+5 warnings generated.
+[8/703] Building CXX object CMakeFiles/amiberry.dir/src/fpp.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp.cpp:19:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp.cpp:19:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp.cpp:19:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp.cpp:19:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/fpp.cpp:20:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+5 warnings generated.
+[9/703] Building CXX object CMakeFiles/amiberry.dir/src/expansion.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/expansion.cpp:12:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/expansion.cpp:12:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/expansion.cpp:12:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/expansion.cpp:12:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/expansion.cpp:13:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+/home/mirek/amiberry-android/amiberry/src/expansion.cpp:531:20: warning: address of array 'aci->autoconfig_bytes' will always evaluate to 'true' [-Wpointer-bool-conversion]
+                        } else if (aci->autoconfig_bytes) {
+                               ~~  ~~~~~^~~~~~~~~~~~~~~~
+/home/mirek/amiberry-android/amiberry/src/expansion.cpp:537:20: warning: address of array 'aci->autoconfig_raw' will always evaluate to 'true' [-Wpointer-bool-conversion]
+                        } else if (aci->autoconfig_raw) {
+                               ~~  ~~~~~^~~~~~~~~~~~~~
+7 warnings generated.
+[10/703] Building CXX object CMakeFiles/amiberry.dir/src/filesys.cpp.o
+In file included from /home/mirek/amiberry-android/amiberry/src/filesys.cpp:25:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:22:9: warning: 'CPU_AARCH64' macro redefined [-Wmacro-redefined]
+#define CPU_AARCH64
+        ^
+<command line>:15:9: note: previous definition is here
+#define CPU_AARCH64 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/filesys.cpp:25:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT
+        ^
+<command line>:14:9: note: previous definition is here
+#define CPU_64_BIT 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/filesys.cpp:25:
+In file included from /home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:6:
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:24:9: warning: 'ARMV8' macro redefined [-Wmacro-redefined]
+#define ARMV8
+        ^
+<command line>:13:9: note: previous definition is here
+#define ARMV8 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/filesys.cpp:25:
+/home/mirek/amiberry-android/amiberry/src/osdep/sysconfig.h:28:9: warning: 'AMIBERRY' macro redefined [-Wmacro-redefined]
+#define AMIBERRY
+        ^
+<command line>:1:9: note: previous definition is here
+#define AMIBERRY 1
+        ^
+In file included from /home/mirek/amiberry-android/amiberry/src/filesys.cpp:26:
+/home/mirek/amiberry-android/amiberry/src/include/sysdeps.h:49:9: warning: 'CPU_64_BIT' macro redefined [-Wmacro-redefined]
+#define CPU_64_BIT 1
+        ^
+/home/mirek/amiberry-android/amiberry/android/app/src/main/jni/android_sysconfig.h:23:9: note: previous definition is here
+#define CPU_64_BIT
+        ^
+/home/mirek/amiberry-android/amiberry/src/filesys.cpp:2243:14: warning: left operand of comma operator has no effect [-Wunused-value]
+                                        if (uci)ctx,
+                                                ^~~
+6 warnings generated.
+ninja: build stopped: subcommand failed.

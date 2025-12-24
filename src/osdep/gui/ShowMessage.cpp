@@ -60,6 +60,21 @@ static void InitShowMessage(const std::string& message)
 	sdl_video_driver = SDL_GetCurrentVideoDriver();
 	if (sdl_video_driver != nullptr && strcmpi(sdl_video_driver, "KMSDRM") == 0)
 		kmsdrm_detected = true;
+#ifdef __ANDROID__
+	// Android only supports a single window, reuse the existing Amiga window
+	if (sdl_video_driver != nullptr && strcmpi(sdl_video_driver, "Android") == 0)
+	{
+		android_detected = true;
+		if (!mon->gui_window && mon->amiga_window)
+		{
+			mon->gui_window = mon->amiga_window;
+		}
+		if (!mon->gui_renderer && mon->amiga_renderer)
+		{
+			mon->gui_renderer = mon->amiga_renderer;
+		}
+	}
+#endif
 	SDL_GetCurrentDisplayMode(0, &sdl_mode);
 
 	if (!gui_screen)
@@ -131,10 +146,13 @@ static void InitShowMessage(const std::string& message)
 		const bool is_fullscreen = window_flags & SDL_WINDOW_FULLSCREEN;
 		if (!is_maximized && !is_fullscreen)
 		{
+#ifndef __ANDROID__
+			// Skip SDL_SetWindowSize on Android - the window always fills the screen
 			if (amiberry_options.rotation_angle != 0 && amiberry_options.rotation_angle != 180)
 				SDL_SetWindowSize(mon->gui_window, GUI_HEIGHT, GUI_WIDTH);
 			else
 				SDL_SetWindowSize(mon->gui_window, GUI_WIDTH, GUI_HEIGHT);
+#endif
 		}
 	}
 

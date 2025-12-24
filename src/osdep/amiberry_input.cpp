@@ -1300,9 +1300,37 @@ static int init_joystick()
 
 	controllers = get_controllers_path();
 	// do the loop
+	int actual_joystick_count = 0;
 	for (auto i = 0; i < num_joystick; i++)
 	{
-		struct didata* did = &di_joystick[i];
+#ifdef __ANDROID__
+		// On Android, skip devices that look like sensors (accelerometer, gyroscope)
+		// These often have no buttons and many axes
+		const char* joy_name = SDL_JoystickNameForIndex(i);
+		int num_buttons = 0;
+		int num_axes = 0;
+		
+		// Temporarily open to check properties
+		SDL_Joystick* temp_joy = SDL_JoystickOpen(i);
+		if (temp_joy) {
+			num_buttons = SDL_JoystickNumButtons(temp_joy);
+			num_axes = SDL_JoystickNumAxes(temp_joy);
+			SDL_JoystickClose(temp_joy);
+		}
+		
+		// Skip devices with no buttons (likely sensors) or with sensor-like names
+		if (num_buttons == 0) {
+			write_log("Skipping joystick #%i '%s' - no buttons (likely a sensor)\n", i, joy_name ? joy_name : "unknown");
+			continue;
+		}
+		if (joy_name && (strstr(joy_name, "Accelerometer") || strstr(joy_name, "Gyroscope") || 
+		                 strstr(joy_name, "accelerometer") || strstr(joy_name, "gyroscope") ||
+		                 strstr(joy_name, "sensor") || strstr(joy_name, "Sensor"))) {
+			write_log("Skipping joystick #%i '%s' - sensor device\n", i, joy_name);
+			continue;
+		}
+#endif
+		struct didata* did = &di_joystick[actual_joystick_count];
 
 		// Check if joystick supports SDL's game controller interface (a mapping is available)
 		if (SDL_IsGameController(i))
@@ -1318,8 +1346,49 @@ static int init_joystick()
 		}
 
 		fix_didata(did);
-		setup_mapping(did, controllers, i);
+		setup_mapping(did, controllers, actual_joystick_count);
+		actual_joystick_count++;
 	}
+#ifdef __ANDROID__
+	num_joystick = actual_joystick_count;
+	
+	// Register Android virtual joystick as a device
+	if (num_joystick < MAX_INPUT_DEVICES) {
+		struct didata* virtual_did = &di_joystick[num_joystick];
+		virtual_did->name = "Android Virtual Joystick";
+		virtual_did->guid = "android-virtual-joystick";
+		virtual_did->controller = nullptr;
+		virtual_did->joystick = nullptr;
+		virtual_did->joystick_id = -1000; // Special ID for virtual joystick
+		virtual_did->is_controller = false;
+		
+		// Set up as 4-direction digital joystick with 2 buttons
+		virtual_did->axles = 2;
+		virtual_did->buttons = 2;
+		virtual_did->buttons_real = 2;
+		
+		// Axis 0 = Horizontal, Axis 1 = Vertical
+		virtual_did->axisname[0] = "Horizontal";
+		virtual_did->axismappings[0] = 0;
+		virtual_did->axistype[0] = AXISTYPE_NORMAL;
+		
+		virtual_did->axisname[1] = "Vertical";
+		virtual_did->axismappings[1] = 1;
+		virtual_did->axistype[1] = AXISTYPE_NORMAL;
+		
+		// Button 0 = Fire, Button 1 = 2nd button
+		virtual_did->buttonname[0] = "Fire";
+		virtual_did->buttonmappings[0] = 0;
+		virtual_did->buttonsort[0] = 0;
+		
+		virtual_did->buttonname[1] = "2nd Button";
+		virtual_did->buttonmappings[1] = 1;
+		virtual_did->buttonsort[1] = 1;
+		
+		num_joystick++;
+		write_log("Android Virtual Joystick registered as device #%d\n", num_joystick - 1);
+	}
+#endif
 	return 1;
 }
 

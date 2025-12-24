@@ -405,7 +405,64 @@ else ()
     message(STATUS "PCem support disabled")
 endif ()
 
-add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
+# Android-specific source file modifications
+if(ANDROID)
+    # Remove files that have dependencies not available on Android
+    list(REMOVE_ITEM SOURCE_FILES 
+        src/osdep/mp3decoder.cpp
+        external/floppybridge/src/floppybridge_lib.cpp
+        src/specialmonitors.cpp
+        src/osdep/amiberry_serial.cpp
+        # CHD support requires FLAC - disable for now
+        src/archivers/chd/avhuff.cpp
+        src/archivers/chd/bitmap.cpp
+        src/archivers/chd/cdrom.cpp
+        src/archivers/chd/chd.cpp
+        src/archivers/chd/chdcd.cpp
+        src/archivers/chd/chdcodec.cpp
+        src/archivers/chd/corealloc.cpp
+        src/archivers/chd/corefile.cpp
+        src/archivers/chd/corestr.cpp
+        src/archivers/chd/flac.cpp
+        src/archivers/chd/harddisk.cpp
+        src/archivers/chd/hashing.cpp
+        src/archivers/chd/huffman.cpp
+        src/archivers/chd/md5.cpp
+        src/archivers/chd/osdcore.cpp
+        src/archivers/chd/osdlib_unix.cpp
+        src/archivers/chd/osdsync.cpp
+        src/archivers/chd/palette.cpp
+        src/archivers/chd/posixdir.cpp
+        src/archivers/chd/posixfile.cpp
+        src/archivers/chd/posixptty.cpp
+        src/archivers/chd/posixsocket.cpp
+        src/archivers/chd/strconv.cpp
+        src/archivers/chd/strformat.cpp
+        src/archivers/chd/unicode.cpp
+        src/archivers/chd/vecstream.cpp
+        src/archivers/chd/utf8proc.c
+    )
+    
+    # Add Android-specific implementations
+    list(APPEND SOURCE_FILES
+        ${CMAKE_SOURCE_DIR}/android/app/src/main/jni/android_jit.cpp
+        ${CMAKE_SOURCE_DIR}/src/osdep/android/mp3decoder_stub.cpp
+        ${CMAKE_SOURCE_DIR}/src/osdep/android/serial_stub.cpp
+        ${CMAKE_SOURCE_DIR}/src/osdep/android/floppybridge_stub.cpp
+        ${CMAKE_SOURCE_DIR}/src/osdep/android/misc_stubs.cpp
+        ${CMAKE_SOURCE_DIR}/src/osdep/android/android_file_picker.cpp
+        ${CMAKE_SOURCE_DIR}/src/osdep/android/android_vjoystick.cpp
+    )
+    
+    message(STATUS "Android build: modified source file list")
+endif()
+
+# For Android, build as a shared library (native activity)
+if(ANDROID)
+    add_library(${PROJECT_NAME} SHARED ${SOURCE_FILES})
+else()
+    add_executable(${PROJECT_NAME} MACOSX_BUNDLE ${SOURCE_FILES})
+endif()
 
 set_target_properties(${PROJECT_NAME} PROPERTIES
         MACOSX_BUNDLE TRUE
@@ -438,8 +495,19 @@ elseif (CMAKE_SYSTEM_PROCESSOR MATCHES "arm")
     )
 endif ()
 
-target_compile_options(${PROJECT_NAME} PRIVATE -fno-pie)
-target_link_options(${PROJECT_NAME} PRIVATE -no-pie)
+# Non-Android platforms: disable PIE for JIT compatibility
+if(NOT ANDROID)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fno-pie)
+    target_link_options(${PROJECT_NAME} PRIVATE -no-pie)
+endif()
+
+# Android requires Position Independent Code for shared libraries
+if(ANDROID)
+    # Use -fPIC for shared library (mandatory on Android)
+    target_compile_options(${PROJECT_NAME} PRIVATE -fPIC)
+    target_link_options(${PROJECT_NAME} PRIVATE -fPIC)
+    set_target_properties(${PROJECT_NAME} PROPERTIES POSITION_INDEPENDENT_CODE ON)
+endif()
 
 target_include_directories(${PROJECT_NAME} PRIVATE
         src

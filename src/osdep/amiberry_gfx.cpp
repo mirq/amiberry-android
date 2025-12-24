@@ -43,7 +43,13 @@
 #include "fsdb_host.h"
 #include "savestate.h"
 
+#ifdef __ANDROID__
+#include "android/android_vjoystick.h"
+#endif
+
+#ifndef __ANDROID__
 #include <png.h>
+#endif
 #include <SDL_image.h>
 #ifdef USE_OPENGL
 #include <GL/glew.h>
@@ -95,6 +101,9 @@ static int dx = 0, dy = 0;
 SDL_Rect crop_rect;
 const char* sdl_video_driver;
 bool kmsdrm_detected = false;
+#ifdef __ANDROID__
+bool android_detected = false;
+#endif
 
 static int display_width;
 static int display_height;
@@ -357,6 +366,12 @@ static bool SDL2_renderframe(const int monid, int mode, int immediate)
 		{
 			vkbd_redraw();
 		}
+#ifdef __ANDROID__
+		// Render Android virtual joystick overlay
+		android_vjoystick_render(mon->amiga_renderer);
+		// Always render the overlay toggle button
+		android_overlay_button_render(mon->amiga_renderer);
+#endif
 		return true;
 	}
 #endif
@@ -1498,13 +1513,21 @@ static void close_hwnds(struct AmigaMonitor* mon)
 		gl_context = nullptr;
 	}
 #else
-	if (mon->amiga_renderer && !kmsdrm_detected)
+	if (mon->amiga_renderer && !kmsdrm_detected
+#ifdef __ANDROID__
+		&& !android_detected
+#endif
+	)
 	{
 		SDL_DestroyRenderer(mon->amiga_renderer);
 		mon->amiga_renderer = nullptr;
 	}
 #endif
-	if (mon->amiga_window && !kmsdrm_detected)
+	if (mon->amiga_window && !kmsdrm_detected
+#ifdef __ANDROID__
+		&& !android_detected
+#endif
+	)
 	{
 		SDL_DestroyWindow(mon->amiga_window);
 		mon->amiga_window = nullptr;
@@ -1659,6 +1682,10 @@ static int open_windows(AmigaMonitor* mon, bool mousecapture, bool started)
 	bool recapture = false;
 	int ret;
 
+#ifdef __ANDROID__
+	SDL_Log("open_windows: ENTER, monitor_id=%d, amiga_window=%p", mon->monitor_id, mon->amiga_window);
+#endif
+
 	mon->screen_is_initialized = 0;
 
 	if (mon->monitor_id && mouseactive)
@@ -1680,16 +1707,32 @@ static int open_windows(AmigaMonitor* mon, bool mousecapture, bool started)
 			updatemodes(mon);
 			update_gfxparams(mon);
 		}
+#ifdef __ANDROID__
+		SDL_Log("open_windows: calling doInit, init_round=%d", init_round);
+#endif
 		ret = doInit(mon);
+#ifdef __ANDROID__
+		SDL_Log("open_windows: doInit returned %d", ret);
+#endif
 		init_round++;
 		if (ret < -9) {
+#ifdef __ANDROID__
+			SDL_Log("open_windows: doInit failed badly (ret < -9), returning 0");
+#endif
 			return 0;
 		}
 	} while (ret < 0);
 
 	if (!ret) {
+#ifdef __ANDROID__
+		SDL_Log("open_windows: ret is 0, returning 0");
+#endif
 		return ret;
 	}
+
+#ifdef __ANDROID__
+	SDL_Log("open_windows: SUCCESS, ret=%d", ret);
+#endif
 
 	bool startactive = (started && mouseactive) || (!started && !currprefs.start_uncaptured && !currprefs.start_minimized);
 	bool startpaused = !started && ((currprefs.start_minimized && currprefs.minimized_pause) || (currprefs.start_uncaptured && currprefs.inactive_pause && isfullscreen() <= 0));
@@ -2807,14 +2850,23 @@ void machdep_free()
 
 int graphics_init(bool mousecapture)
 {
+#ifdef __ANDROID__
+	SDL_Log("graphics_init: ENTER, mousecapture=%d", mousecapture);
+#endif
 	gfxmode_reset(0);
 	if (open_windows(&AMonitors[0], mousecapture, false)) {
+#ifdef __ANDROID__
+		SDL_Log("graphics_init: open_windows SUCCESS, returning true");
+#endif
 		if (currprefs.monitoremu_mon > 0 && currprefs.monitoremu) {
 			gfxmode_reset(currprefs.monitoremu_mon);
 			open_windows(&AMonitors[currprefs.monitoremu_mon], mousecapture, false);
 		}
 		return true;
 	}
+#ifdef __ANDROID__
+	SDL_Log("graphics_init: open_windows FAILED, returning false");
+#endif
 	return false;
 }
 
@@ -2840,6 +2892,10 @@ void graphics_leave()
 	{
 		close_windows(&AMonitors[i]);
 	}
+
+#ifdef __ANDROID__
+	android_vjoystick_quit();
+#endif
 
 	//SDL_DestroyMutex(screen_cs);
 	//screen_cs = nullptr;
@@ -3036,6 +3092,23 @@ static int create_windows(struct AmigaMonitor* mon)
 			mon->amiga_renderer = mon->gui_renderer;
 		}
 	}
+#ifdef __ANDROID__
+	// Android only supports a single window, reuse the GUI window if it exists
+	if (sdl_video_driver != nullptr && strcmpi(sdl_video_driver, "Android") == 0)
+	{
+		android_detected = true;
+		if (!mon->amiga_window && mon->gui_window)
+		{
+			SDL_Log("create_windows: Reusing gui_window (%p) as amiga_window", mon->gui_window);
+			mon->amiga_window = mon->gui_window;
+		}
+		if (!mon->amiga_renderer && mon->gui_renderer)
+		{
+			SDL_Log("create_windows: Reusing gui_renderer (%p) as amiga_renderer", mon->gui_renderer);
+			mon->amiga_renderer = mon->gui_renderer;
+		}
+	}
+#endif
 	// If KMSDRM is detected, force Full-Window mode
 	if (kmsdrm_detected)
 	{
@@ -3400,6 +3473,11 @@ static bool doInit(AmigaMonitor* mon)
 		vkbd_set_style(string(currprefs.vkbd_style));
 		vkbd_init();
 	}
+
+#ifdef __ANDROID__
+	// Initialize virtual joystick overlay
+	android_vjoystick_init(mon->amiga_renderer);
+#endif
 
 	return true;
 }
@@ -3902,6 +3980,7 @@ unsigned long target_lastsynctime()
 	return last_synctime;
 }
 
+#ifndef __ANDROID__
 static int save_png(const SDL_Surface* surface, const std::string& path)
 {
 	const auto w = surface->w;
@@ -3969,6 +4048,14 @@ static int save_png(const SDL_Surface* surface, const std::string& path)
 	fclose(f);
 	return 1;
 }
+#else
+// Android stub - PNG screenshots not yet supported
+static int save_png(const SDL_Surface* surface, const std::string& path)
+{
+	write_log(_T("Screenshot not supported on Android yet\n"));
+	return 0;
+}
+#endif
 
 bool create_screenshot()
 {

@@ -46,4 +46,15 @@ int uae_vm_page_size(void);
 
 // void *uae_vm_alloc_with_flags(uae_u32 size, int protect, int flags);
 
+/* Android JIT W^X compliance functions.
+ * On Android 10+, memory cannot be both writable and executable simultaneously.
+ * These functions provide dual-mapped memory: RW for writing, RX for execution. */
+#ifdef __ANDROID__
+void *uae_vm_alloc_jit(uae_u32 size, int flags);
+bool uae_vm_free_jit(void *rw_ptr, int size);
+void *android_jit_get_rw_ptr(void);
+void *android_jit_get_rx_ptr(void);
+size_t android_jit_get_size(void);
+#endif
+
 #endif /* UAE_VM_H */

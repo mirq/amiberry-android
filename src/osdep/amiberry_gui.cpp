@@ -882,10 +882,18 @@ int gui_init()
 	run_gui();
 	gui_to_prefs();
 
+#ifdef __ANDROID__
+	SDL_Log("gui_init: after run_gui, quit_program=%d, UAE_QUIT=%d", quit_program, UAE_QUIT);
+#endif
+	
 	if (quit_program < 0)
 		quit_program = -quit_program;
 	if (quit_program == UAE_QUIT)
 		ret = -2; // Quit without start of emulator
+
+#ifdef __ANDROID__
+	SDL_Log("gui_init: returning ret=%d", ret);
+#endif
 
 	inputdevice_acquire (TRUE);
 

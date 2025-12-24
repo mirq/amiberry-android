@@ -63,7 +63,7 @@
 #endif
 
 #include <iostream>
-#if defined(__linux__)
+#if defined(__linux__) && !defined(__ANDROID__)
 #include <linux/kd.h>
 #endif
 #include <sys/ioctl.h>
@@ -1433,7 +1433,13 @@ static int real_main2 (int argc, TCHAR **argv)
 		no_gui = false;
 	restart_program = 0;
 	if (! no_gui) {
+#ifdef __ANDROID__
+		SDL_Log("real_main2: calling gui_init()");
+#endif
 		const auto err = gui_init ();
+#ifdef __ANDROID__
+		SDL_Log("real_main2: gui_init returned %d", err);
+#endif
 		copy_prefs(&changed_prefs, &currprefs);
 		set_config_changed ();
 		if (err == -1) {
@@ -1444,21 +1450,35 @@ static int real_main2 (int argc, TCHAR **argv)
 		}
 	}
 
+#ifdef __ANDROID__
+	SDL_Log("real_main2: continuing after GUI, setting up emulation...");
+#endif
+
 	memset (&gui_data, 0, sizeof gui_data);
 	gui_data.cd = -1;
 	gui_data.hd = -1;
 	gui_data.net = -1;
 	gui_data.md = (currprefs.cs_cd32nvram || currprefs.cs_cdtvram) ? 0 : -1;
 
+#ifdef __ANDROID__
+	SDL_Log("real_main2: about to call compiler_init/init_shm");
+#endif
+
 #ifdef JIT
 	compiler_init();
 #endif
 #ifdef NATMEM_OFFSET
 	if (!init_shm ()) {
+#ifdef __ANDROID__
+		SDL_Log("real_main2: init_shm() FAILED");
+#endif
 		if (currprefs.start_gui)
 			uae_restart(&currprefs, -1, nullptr);
 		return 0;
 	}
+#ifdef __ANDROID__
+	SDL_Log("real_main2: init_shm() success");
+#endif
 #endif
 #ifdef WITH_LUA
 	uae_lua_init ();
@@ -1500,7 +1520,14 @@ static int real_main2 (int argc, TCHAR **argv)
 	reset_frame_rate_hack ();
 	init_m68k (); /* must come after reset_frame_rate_hack (); */
 
+#ifdef __ANDROID__
+	SDL_Log("real_main2: about to call graphics_init(true)");
+#endif
+	
 	if (graphics_init (true)) {
+#ifdef __ANDROID__
+		SDL_Log("real_main2: graphics_init returned TRUE, starting emulation");
+#endif
 	// This never gets triggered anyway
 //#ifdef DEBUGGER
 //		setup_brkhandler ();

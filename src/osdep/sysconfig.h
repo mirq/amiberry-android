@@ -1,6 +1,11 @@
 #pragma once
 #define SUPPORT_THREADS
 
+// Include Android-specific configuration overrides first
+#ifdef __ANDROID__
+#include "android_sysconfig.h"
+#endif
+
 #include <climits>
 #ifdef PATH_MAX
 #define MAX_DPATH PATH_MAX
@@ -97,7 +102,9 @@
 #define SANA2 /* SANA2 network driver */
 #define AMAX /* A-Max ROM adapter emulation */
 /* #define RETROPLATFORM */ /* Cloanto RetroPlayer support */
+#ifndef __ANDROID__
 #define WITH_CHD
+#endif
 /* #define WITH_LUA */ /* lua scripting */
 #define WITH_UAENATIVE
 #define WITH_SLIRP
@@ -143,8 +150,10 @@
 // CPU accelerator board support
 #define WITH_CPUBOARD
 
-// Special Monitors support
+// Special Monitors support (requires libpng, not available on Android yet)
+#ifndef __ANDROID__
 #define WITH_SPECIALMONITORS
+#endif
 
 //#define VIDEOGRAB 1
 

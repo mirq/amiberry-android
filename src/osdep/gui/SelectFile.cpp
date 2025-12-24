@@ -21,6 +21,10 @@
 #include "amiberry_gfx.h"
 #include "amiberry_input.h"
 
+#ifdef __ANDROID__
+#include "android/android_file_picker.h"
+#endif
+
 enum
 {
 	DIALOG_WIDTH = 600,
@@ -105,7 +109,10 @@ static void checkfoldername(const std::string& current)
 		char actualpath[MAX_DPATH];
 		fileList->changeDir(current);
 		auto* const ptr = realpath(current.c_str(), actualpath);
-		workingDir = std::string(ptr);
+		if (ptr != nullptr)
+			workingDir = std::string(ptr);
+		else
+			workingDir = current; // fallback to the original path
 		closedir(dir);
 		lstFiles->adjustSize();
 	}
@@ -249,7 +256,13 @@ static void InitSelectFile(const std::string& title)
 	txtCurrent->addActionListener(editFilePathActionListener);
 
 	selectFileActionListener = new SelectFileActionListener();
+#ifdef __ANDROID__
+	// On Android, "." resolves to "/" which is not accessible
+	// Use home_dir instead as the initial directory
+	fileList = new SelectFileListModel(home_dir);
+#else
 	fileList = new SelectFileListModel(".");
+#endif
 
 	lstFiles = new gcn::ListBox(fileList);
 	lstFiles->setSize(DIALOG_WIDTH - 45, DIALOG_HEIGHT - 108);
@@ -447,6 +460,20 @@ static void SelectFileLoop()
 
 std::string SelectFile(const std::string& title, std::string value, const char* filter[], const bool create)
 {
+#ifdef __ANDROID__
+	// On Android, use the native Storage Access Framework file picker
+	// This provides proper scoped storage access without requiring dangerous permissions
+	
+	// Use */* to show all files - Amiga files (.hdf, .adf, etc.) don't have standard MIME types
+	// The Android file picker doesn't filter well by extension, so show everything
+	std::string mimeTypes = "*/*";
+	
+	std::string result = android_select_file(title, mimeTypes);
+	if (!result.empty())
+		return result;
+	// If user cancelled or picker failed, return empty string
+	return "";
+#else
 	const AmigaMonitor* mon = &AMonitors[0];
 
 	dialogResult = false;
@@ -487,4 +514,5 @@ std::string SelectFile(const std::string& title, std::string value, const char* 
 		value = "";
 
 	return value;
+#endif
 }

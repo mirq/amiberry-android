@@ -3391,7 +3391,9 @@ static void rethink_intreq(void)
 
 static void intreq_checks(uae_u16 oldreq, uae_u16 newreq)
 {
+#ifdef SERIAL_PORT
 	serial_rbf_change((newreq & 0x0800) ? 1 : 0);
+#endif
 }
 
 static void event_doint_delay_do_ext_old(uae_u32 v)
@@ -3881,9 +3883,11 @@ static void DDFSTOP(uae_u16 v)
 static void FMODE(uae_u16 v)
 {
 	if (!aga_mode) {
+#ifdef WITH_SPECIALMONITORS
 		if (currprefs.monitoremu) {
 			specialmonitor_store_fmode(vpos, agnus_hpos, v);
 		}
+#endif
 		fmode_saved = v;
 		v = 0;
 	} else {

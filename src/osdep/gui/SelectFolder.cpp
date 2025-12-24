@@ -19,6 +19,10 @@
 #include "amiberry_gfx.h"
 #include "amiberry_input.h"
 
+#ifdef __ANDROID__
+#include "android/android_file_picker.h"
+#endif
+
 enum
 {
 	DIALOG_WIDTH = 600,
@@ -43,6 +47,13 @@ class SelectDirListModel : public gcn::ListModel
 	std::vector<std::string> dirs;
 
 public:
+	// Default constructor - no directory reading at static init time
+	// This is important for Android where filesystem may not be accessible yet
+	SelectDirListModel()
+	{
+		dirs.push_back("..");
+	}
+
 	SelectDirListModel(const std::string& path)
 	{
 		changeDir(path);
@@ -78,7 +89,8 @@ public:
 	}
 };
 
-static SelectDirListModel dirList(".");
+// Use default constructor - defer directory reading until checkfoldername() is called
+static SelectDirListModel dirList;
 
 static void checkfoldername(const std::string& current)
 {
@@ -89,7 +101,10 @@ static void checkfoldername(const std::string& current)
 		char actualpath [MAX_DPATH];
 		dirList = current;
 		auto* const ptr = realpath(current.c_str(), actualpath);
-		workingDir = std::string(ptr);
+		if (ptr != nullptr)
+			workingDir = std::string(ptr);
+		else
+			workingDir = current; // fallback to the original path
 		closedir(dir);
 		lstFolders->adjustSize();
 	}
@@ -361,6 +376,15 @@ static void SelectFolderLoop()
 
 std::string SelectFolder(const std::string& title, std::string value)
 {
+#ifdef __ANDROID__
+	// On Android, use the native Storage Access Framework folder picker
+	// This provides proper scoped storage access without requiring dangerous permissions
+	std::string result = android_select_folder(title);
+	if (!result.empty())
+		return result;
+	// If user cancelled or picker failed, return empty string
+	return "";
+#else
 	const AmigaMonitor* mon = &AMonitors[0];
 
 	dialogResult = false;
@@ -391,4 +415,5 @@ std::string SelectFolder(const std::string& title, std::string value)
 		value = "";
 
 	return value;
+#endif
 }
