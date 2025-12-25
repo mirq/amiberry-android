@@ -75,10 +75,17 @@ jobs:
       - name: Build native library
         run: cmake --build build-android --target amiberry -j$(nproc)
 
-      - name: Copy native library to Android project
+      - name: Copy native libraries to Android project
         run: |
           mkdir -p android/app/src/main/jniLibs/arm64-v8a
+          # Copy main Amiberry library
           cp build-android/libamiberry.so android/app/src/main/jniLibs/arm64-v8a/
+          # Copy SDL2 libraries built by CMake
+          cp build-android/SDL2/libSDL2.so android/app/src/main/jniLibs/arm64-v8a/
+          cp build-android/SDL2_image/libSDL2_image.so android/app/src/main/jniLibs/arm64-v8a/
+          cp build-android/SDL2_ttf/libSDL2_ttf.so android/app/src/main/jniLibs/arm64-v8a/
+          # Copy C++ shared library from NDK
+          cp $ANDROID_NDK_HOME/toolchains/llvm/prebuilt/linux-x86_64/sysroot/usr/lib/aarch64-linux-android/libc++_shared.so android/app/src/main/jniLibs/arm64-v8a/
           ls -lh android/app/src/main/jniLibs/arm64-v8a/
 
       - name: Build Debug APK
@@ -88,7 +95,7 @@ jobs:
           chmod +x gradlew
           ./gradlew assembleDebug --stacktrace
 
-      - name: Build Release APK (unsigned)
+      - name: Build Release APK (signed)
         if: github.ref_type == 'tag'
         run: |
           cd android
@@ -106,7 +113,9 @@ jobs:
         if: github.ref_type == 'tag'
         run: |
           cd android/app/build/outputs/apk/release
-          zip amiberry-${{ github.ref_name }}-android-arm64-v8a.zip app-release-unsigned.apk
+          # Rename signed APK to include version
+          mv app-release.apk amiberry-${{ github.ref_name }}-android-arm64-v8a.apk
+          zip amiberry-${{ github.ref_name }}-android-arm64-v8a.zip amiberry-${{ github.ref_name }}-android-arm64-v8a.apk
           mv amiberry-${{ github.ref_name }}-android-arm64-v8a.zip ${{ github.workspace }}/
 
       - name: Upload Release APK artifact
@@ -144,11 +153,9 @@ jobs:
           body: |
             ## Android APK (arm64-v8a)
             
-            **Note**: This is an unsigned APK for testing purposes.
-            
             ### Installation
             1. Download `amiberry-${{ github.ref_name }}-android-arm64-v8a.zip`
-            2. Extract `app-release-unsigned.apk`
+            2. Extract `amiberry-${{ github.ref_name }}-android-arm64-v8a.apk`
             3. Enable "Install from Unknown Sources" on your Android device
             4. Install the APK
             
@@ -188,11 +195,11 @@ jobs:
           body: |
             ## Android APK (arm64-v8a) - Preview Build
             
-            **⚠️ This is a pre-release build for testing purposes.**
+            **This is a pre-release build for testing purposes.**
             
             ### Installation
             1. Download `amiberry-${{ github.ref_name }}-android-arm64-v8a.zip`
-            2. Extract `app-release-unsigned.apk`
+            2. Extract `amiberry-${{ github.ref_name }}-android-arm64-v8a.apk`
             3. Enable "Install from Unknown Sources" on your Android device
             4. Install the APK
             
