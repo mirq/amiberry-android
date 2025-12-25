@@ -1,1 +1,0 @@
-/home/mirek/amiberry-android/amiberry/android/app/build/intermediates/cxx/Debug/2h3d1g1b/obj/arm64-v8a
