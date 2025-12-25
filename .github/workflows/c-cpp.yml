@@ -1,9 +1,7 @@
-name: C/C++ CI
+name: C/C++ CI (Disabled for Android Port)
 
 on:
   workflow_dispatch:
-  push:
-  pull_request:
 
 # Set least-privilege defaults for all jobs
 permissions:
