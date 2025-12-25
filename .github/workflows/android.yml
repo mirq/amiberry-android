@@ -6,6 +6,9 @@ on:
     branches:
       - main
       - android-**
+    tags:
+      - 'v*'
+      - 'preview-v*'
   pull_request:
     paths:
       - 'android/**'
