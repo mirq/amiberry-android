@@ -83,6 +83,36 @@
       "description": "Target Windows (32-bit) with the Visual Studio development environment. (RelWithDebInfo)",
       "inherits": "x86-debug",
       "cacheVariables": { "CMAKE_BUILD_TYPE": "Release" }
+    },
+    {
+      "name": "android-arm64",
+      "displayName": "Android arm64-v8a",
+      "description": "Target Android arm64-v8a with NDK toolchain",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-android",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK}/build/cmake/android.toolchain.cmake",
+        "ANDROID_ABI": "arm64-v8a",
+        "ANDROID_PLATFORM": "android-30",
+        "ANDROID_STL": "c++_shared",
+        "USE_ANDROID_SDL": "ON"
+      }
+    },
+    {
+      "name": "android-arm64-debug",
+      "displayName": "Android arm64-v8a Debug",
+      "description": "Target Android arm64-v8a with NDK toolchain (Debug)",
+      "generator": "Ninja",
+      "binaryDir": "${sourceDir}/build-android-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_TOOLCHAIN_FILE": "$env{ANDROID_NDK}/build/cmake/android.toolchain.cmake",
+        "ANDROID_ABI": "arm64-v8a",
+        "ANDROID_PLATFORM": "android-30",
+        "ANDROID_STL": "c++_shared",
+        "USE_ANDROID_SDL": "ON"
+      }
     }
   ]
 }

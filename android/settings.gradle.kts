@@ -20,7 +20,6 @@ if (localPropertiesFile.exists()) {
     val localProperties = java.util.Properties()
     localProperties.load(localPropertiesFile.inputStream())
     localProperties.forEach { key, value ->
-        gradle.rootProject.extra.set(key.toString(), value)
         System.setProperty(key.toString(), value.toString())
     }
 }

@@ -5498,10 +5498,6 @@ int main(int argc, char* argv[])
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_PS5_RUMBLE, "0");
 	SDL_SetHint(SDL_HINT_JOYSTICK_HIDAPI_STEAM, "0");
 	SDL_SetHint(SDL_HINT_TV_REMOTE_AS_JOYSTICK, "0");
-	
-	// Force OpenSL ES audio driver (AAudio MMAP has issues in Android emulator)
-	SDL_SetHint(SDL_HINT_AUDIODRIVER, "openslES");
-	SDL_SetHint(SDL_HINT_ANDROID_BLOCK_ON_PAUSE_PAUSEAUDIO, "1");
 #endif
 	
 	if (SDL_Init(SDL_INIT_EVERYTHING) != 0)

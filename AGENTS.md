@@ -69,13 +69,28 @@ Porting Amiberry to Android API 30+ (Android 11+) with arm64-v8a architecture. A
 - Proper file access to external storage (ROMs, disk images)
 
 ### Build Process
-```bash
-# Native library
-cd /home/mirek/amiberry-android/amiberry
-cmake --build build-android --target amiberry -j$(nproc)
 
-# Copy to Android project
-cp build-android/libamiberry.so android/app/src/main/jniLibs/arm64-v8a/
+**Prerequisites:**
+```bash
+# Set ANDROID_NDK environment variable
+export ANDROID_NDK=$ANDROID_HOME/ndk/<version>
+
+# Initialize submodules (first time only)
+git submodule update --init --recursive
+```
+
+**Build:**
+```bash
+# Configure and build native libraries (SDL2 + Amiberry)
+cmake --preset android-arm64
+cmake --build build-android -j$(nproc)
+
+# Copy all .so files to Android project
+cp build-android/libamiberry.so \
+   build-android/SDL2/libSDL2.so \
+   build-android/SDL2_image/libSDL2_image.so \
+   build-android/SDL2_ttf/libSDL2_ttf.so \
+   android/app/src/main/jniLibs/arm64-v8a/
 
 # Build APK
 cd android && ./gradlew assembleDebug
@@ -84,6 +99,11 @@ cd android && ./gradlew assembleDebug
 adb install -r app/build/outputs/apk/debug/app-debug.apk
 adb shell am start -n com.blitterstudio.amiberry/.LauncherActivity
 ```
+
+**SDL2 Libraries:**
+- SDL2, SDL2_image, SDL2_ttf are git submodules (external/SDL2, external/SDL2_image, external/SDL2_ttf)
+- Built from source automatically via `USE_ANDROID_SDL=ON` (set in android-arm64 preset)
+- Versions: SDL2 2.33.0, SDL2_image 2.9.0, SDL2_ttf 2.25.0 (SDL2 branch = latest SDL2.x)
 
 ### Key Android-Specific Code Patterns
 ```cpp
@@ -116,6 +136,9 @@ adb shell dumpsys package com.blitterstudio.amiberry | grep permission
 
 ## Project Structure
 - `src/` - Main emulator source; `src/osdep/` - Platform-specific code
-- `external/` - Third-party libs (libguisan, mt32emu, floppybridge, capsimage)
+- `external/` - Third-party libs (SDL2*, libguisan, mt32emu, floppybridge, capsimage)
+  - `external/SDL2/` - SDL2 (git submodule, SDL2 branch)
+  - `external/SDL2_image/` - SDL2_image (git submodule, SDL2 branch)
+  - `external/SDL2_ttf/` - SDL2_ttf (git submodule, SDL2 branch)
 - `cmake/` - Build system modules and toolchains
 - `android/` - Android-specific build files and Kotlin source

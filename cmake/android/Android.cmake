@@ -73,31 +73,36 @@ function(configure_android_jit target)
     target_link_libraries(${target} PRIVATE log)
 endfunction()
 
-# SDL2 for Android - build from source
+# SDL2 for Android - build from source (submodules)
 if(USE_ANDROID_SDL)
-    message(STATUS "Building SDL2 from source for Android")
+    message(STATUS "Building SDL2 from source for Android (submodules)")
     
     # SDL2 core - configure for shared library
-    set(SDL_SHARED ON CACHE BOOL "Build SDL2 shared library")
-    set(SDL_STATIC OFF CACHE BOOL "Don't build SDL2 static library")
-    set(SDL2_DISABLE_INSTALL ON CACHE BOOL "Disable SDL2 install")
+    set(SDL_SHARED ON CACHE BOOL "Build SDL2 shared library" FORCE)
+    set(SDL_STATIC OFF CACHE BOOL "Don't build SDL2 static library" FORCE)
+    set(SDL2_DISABLE_INSTALL ON CACHE BOOL "Disable SDL2 install" FORCE)
+    set(SDL_TEST OFF CACHE BOOL "Disable SDL2 tests" FORCE)
     
     # Add SDL2 subdirectory
     add_subdirectory(${CMAKE_SOURCE_DIR}/external/SDL2 ${CMAKE_BINARY_DIR}/SDL2 EXCLUDE_FROM_ALL)
     
-    # SDL2_image configuration
-    set(SDL2IMAGE_INSTALL OFF CACHE BOOL "Disable SDL2_image install")
-    set(SDL2IMAGE_SAMPLES OFF CACHE BOOL "Disable SDL2_image samples")
-    set(SDL2IMAGE_VENDORED OFF CACHE BOOL "Don't use vendored libraries")
-    set(SDL2IMAGE_PNG ON CACHE BOOL "Enable PNG support")
-    set(SDL2IMAGE_JPG ON CACHE BOOL "Enable JPG support")
-    set(SDL2IMAGE_WEBP OFF CACHE BOOL "Disable WEBP support")
+    # SDL2_image configuration - use stb for JPG/PNG (no external deps needed)
+    set(SDL2IMAGE_SAMPLES OFF CACHE BOOL "Disable SDL2_image samples" FORCE)
+    set(SDL2IMAGE_TESTS OFF CACHE BOOL "Disable SDL2_image tests" FORCE)
+    set(SDL2IMAGE_VENDORED OFF CACHE BOOL "Don't use vendored libraries" FORCE)
+    set(SDL2IMAGE_DEPS_SHARED OFF CACHE BOOL "Don't load deps dynamically" FORCE)
+    set(SDL2IMAGE_BACKEND_STB ON CACHE BOOL "Use stb for JPG/PNG" FORCE)
+    set(SDL2IMAGE_PNG ON CACHE BOOL "Enable PNG support" FORCE)
+    set(SDL2IMAGE_JPG ON CACHE BOOL "Enable JPG support" FORCE)
+    set(SDL2IMAGE_WEBP OFF CACHE BOOL "Disable WEBP support" FORCE)
+    set(SDL2IMAGE_AVIF OFF CACHE BOOL "Disable AVIF support" FORCE)
+    set(SDL2IMAGE_JXL OFF CACHE BOOL "Disable JXL support" FORCE)
+    set(SDL2IMAGE_TIF OFF CACHE BOOL "Disable TIFF support" FORCE)
     
-    # SDL2_ttf configuration  
-    set(SDL2TTF_INSTALL OFF CACHE BOOL "Disable SDL2_ttf install")
-    set(SDL2TTF_SAMPLES OFF CACHE BOOL "Disable SDL2_ttf samples")
-    set(SDL2TTF_VENDORED ON CACHE BOOL "Use vendored freetype")
-    set(SDL2TTF_HARFBUZZ OFF CACHE BOOL "Disable harfbuzz")
+    # SDL2_ttf configuration - use vendored freetype
+    set(SDL2TTF_SAMPLES OFF CACHE BOOL "Disable SDL2_ttf samples" FORCE)
+    set(SDL2TTF_VENDORED ON CACHE BOOL "Use vendored freetype" FORCE)
+    set(SDL2TTF_HARFBUZZ OFF CACHE BOOL "Disable harfbuzz" FORCE)
     
     # Set SDL2_DIR so SDL2_image/ttf can find it
     set(SDL2_DIR ${CMAKE_BINARY_DIR}/SDL2)
