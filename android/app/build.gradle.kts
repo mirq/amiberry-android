@@ -66,6 +66,19 @@ android {
     }
 }
 
+// Copy SDL2 Java files from submodule to Android project
+// This ensures Java/JNI signatures match the native SDL library
+tasks.register<Copy>("syncSDLJavaFiles") {
+    from("../../external/SDL2/android-project/app/src/main/java/org/libsdl/app")
+    into("src/main/java/org/libsdl/app")
+    include("*.java")
+}
+
+// Run syncSDLJavaFiles before compilation
+tasks.named("preBuild") {
+    dependsOn("syncSDLJavaFiles")
+}
+
 dependencies {
     implementation("androidx.core:core-ktx:1.12.0")
     implementation("androidx.appcompat:appcompat:1.6.1")

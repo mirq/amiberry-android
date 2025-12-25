@@ -137,9 +137,7 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
 
         // Prevent a screen distortion glitch,
         // for instance when the device is in Landscape and a Portrait App is resumed.
-        // AMIBERRY: Disabled orientation check - let app start in any orientation
         boolean skip = false;
-        /*
         int requestedOrientation = SDLActivity.mSingleton.getRequestedOrientation();
 
         if (requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_PORTRAIT || requestedOrientation == ActivityInfo.SCREEN_ORIENTATION_SENSOR_PORTRAIT) {
@@ -151,7 +149,6 @@ public class SDLSurface extends SurfaceView implements SurfaceHolder.Callback,
                skip = true;
             }
         }
-        */
 
         // Special Patch for Square Resolution: Black Berry Passport
         if (skip) {

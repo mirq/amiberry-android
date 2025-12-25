@@ -148,3 +148,6 @@ Brewfile.lock.json
 # Android local configuration
 android/local.properties
 android/gradle.local.properties
+
+# Android native libraries (built from source)
+android/app/src/main/jniLibs/**/*.so

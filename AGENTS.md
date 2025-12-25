@@ -77,6 +77,9 @@ export ANDROID_NDK=$ANDROID_HOME/ndk/<version>
 
 # Initialize submodules (first time only)
 git submodule update --init --recursive
+
+# Java 17 required for Gradle (Java 21 causes jlink errors)
+export JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64
 ```
 
 **Build:**
@@ -92,8 +95,8 @@ cp build-android/libamiberry.so \
    build-android/SDL2_ttf/libSDL2_ttf.so \
    android/app/src/main/jniLibs/arm64-v8a/
 
-# Build APK
-cd android && ./gradlew assembleDebug
+# Build APK (requires Java 17)
+cd android && JAVA_HOME=/usr/lib/jvm/java-17-openjdk-amd64 ./gradlew assembleDebug
 
 # Deploy
 adb install -r app/build/outputs/apk/debug/app-debug.apk
@@ -103,7 +106,8 @@ adb shell am start -n com.blitterstudio.amiberry/.LauncherActivity
 **SDL2 Libraries:**
 - SDL2, SDL2_image, SDL2_ttf are git submodules (external/SDL2, external/SDL2_image, external/SDL2_ttf)
 - Built from source automatically via `USE_ANDROID_SDL=ON` (set in android-arm64 preset)
-- Versions: SDL2 2.33.0, SDL2_image 2.9.0, SDL2_ttf 2.25.0 (SDL2 branch = latest SDL2.x)
+- Versions: SDL2 2.32.10, SDL2_image 2.8.8, SDL2_ttf 2.24.0
+- **SDL Java files**: Automatically synced from `external/SDL2/android-project/app/src/main/java/org/libsdl/app/` to `android/app/src/main/java/org/libsdl/app/` during Gradle build (via `syncSDLJavaFiles` task in build.gradle.kts). This ensures Java/JNI signatures match the native library.
 
 ### Key Android-Specific Code Patterns
 ```cpp
