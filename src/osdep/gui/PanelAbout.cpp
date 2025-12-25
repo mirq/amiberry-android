@@ -10,6 +10,7 @@ static gcn::Label* lblEmulatorVersion;
 static gcn::Label* lblCopyright;
 static gcn::Label* lblSDL_compiled_version;
 static gcn::Label* lblSDL_driver;
+static gcn::Label* lblSDL_audio_driver;
 static gcn::Icon* icon;
 static gcn::Image* amiberryLogoImage;
 static gcn::TextBox* textBox;
@@ -23,6 +24,7 @@ void InitPanelAbout(const config_category& category)
 	lblCopyright = new gcn::Label(get_copyright_notice());
 	lblSDL_compiled_version = new gcn::Label(get_sdl2_version_string());
 	lblSDL_driver = new gcn::Label("SDL2 video driver: " + std::string(sdl_video_driver));
+	lblSDL_audio_driver = new gcn::Label("SDL2 audio driver: " + std::string(sdl_audio_driver ? sdl_audio_driver : "NULL"));
 	
 	textBox = new gcn::TextBox(
 		"This program is free software: you can redistribute it and/or modify\n"
@@ -50,6 +52,7 @@ void InitPanelAbout(const config_category& category)
 		"Thomas Navarro Garcia - Original Amiberry logo\n"
 		"Chips - Original RPI port\n"
 		"Vasiliki Soufi - Amiberry name\n"
+		"Miroslaw Michalak (Mirq) - Android SDL port\n"
 		"\n"
 		"Dedicated to HeZoR - R.I.P. little brother (1978-2017)\n"
 	);
@@ -78,7 +81,9 @@ void InitPanelAbout(const config_category& category)
 	category.panel->add(lblSDL_compiled_version, DISTANCE_BORDER, pos_y);
 	pos_y += lblSDL_compiled_version->getHeight() + DISTANCE_NEXT_Y / 2;
 	category.panel->add(lblSDL_driver, DISTANCE_BORDER, pos_y);
-	pos_y += lblSDL_driver->getHeight() + DISTANCE_NEXT_Y;
+	pos_y += lblSDL_driver->getHeight() + DISTANCE_NEXT_Y / 2;
+	category.panel->add(lblSDL_audio_driver, DISTANCE_BORDER, pos_y);
+	pos_y += lblSDL_audio_driver->getHeight() + DISTANCE_NEXT_Y;
 	textBoxScrollArea->setHeight(category.panel->getHeight() - DISTANCE_BORDER - pos_y);
 	category.panel->add(textBoxScrollArea, DISTANCE_BORDER, pos_y);
 
@@ -91,6 +96,7 @@ void ExitPanelAbout()
 	delete lblCopyright;
 	delete lblSDL_compiled_version;
 	delete lblSDL_driver;
+	delete lblSDL_audio_driver;
 	delete icon;
 	delete amiberryLogoImage;
 	delete textBoxScrollArea;

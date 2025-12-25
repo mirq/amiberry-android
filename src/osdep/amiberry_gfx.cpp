@@ -100,6 +100,7 @@ SDL_Rect render_quad;
 static int dx = 0, dy = 0;
 SDL_Rect crop_rect;
 const char* sdl_video_driver;
+const char* sdl_audio_driver;
 bool kmsdrm_detected = false;
 #ifdef __ANDROID__
 bool android_detected = false;
@@ -3080,6 +3081,7 @@ static int create_windows(struct AmigaMonitor* mon)
 	// Detect KMSDRM driver
 	write_log("Getting Current Video Driver...\n");
 	sdl_video_driver = SDL_GetCurrentVideoDriver();
+	sdl_audio_driver = SDL_GetCurrentAudioDriver();
 	if (sdl_video_driver != nullptr && strcmpi(sdl_video_driver, "KMSDRM") == 0)
 	{
 		kmsdrm_detected = true;

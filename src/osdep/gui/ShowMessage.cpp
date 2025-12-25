@@ -58,6 +58,7 @@ static void InitShowMessage(const std::string& message)
 {
 	AmigaMonitor* mon = &AMonitors[0];
 	sdl_video_driver = SDL_GetCurrentVideoDriver();
+	sdl_audio_driver = SDL_GetCurrentAudioDriver();
 	if (sdl_video_driver != nullptr && strcmpi(sdl_video_driver, "KMSDRM") == 0)
 		kmsdrm_detected = true;
 #ifdef __ANDROID__

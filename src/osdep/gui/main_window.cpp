@@ -263,8 +263,10 @@ void amiberry_gui_init()
 {
 	AmigaMonitor* mon = &AMonitors[0];
 	sdl_video_driver = SDL_GetCurrentVideoDriver();
+	sdl_audio_driver = SDL_GetCurrentAudioDriver();
 	
 	write_log("amiberry_gui_init: SDL video driver = '%s'\n", sdl_video_driver ? sdl_video_driver : "NULL");
+	write_log("amiberry_gui_init: SDL audio driver = '%s'\n", sdl_audio_driver ? sdl_audio_driver : "NULL");
 	write_log("amiberry_gui_init: mon->amiga_window = %p, mon->amiga_renderer = %p\n", mon->amiga_window, mon->amiga_renderer);
 
 	if (sdl_video_driver != nullptr && strcmpi(sdl_video_driver, "KMSDRM") == 0)
