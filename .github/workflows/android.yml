@@ -45,6 +45,14 @@ jobs:
           echo "y" | sdkmanager "ndk;25.1.8937393"
           echo "ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/25.1.8937393" >> $GITHUB_ENV
 
+      - name: Create debug keystore
+        run: |
+          mkdir -p ~/.android
+          keytool -genkey -v -keystore ~/.android/debug.keystore \
+            -storepass android -alias androiddebugkey -keypass android \
+            -keyalg RSA -keysize 2048 -validity 10000 \
+            -dname "CN=Android Debug,O=Android,C=US"
+
       - name: Cache Gradle packages
         uses: actions/cache@v4
         with:
