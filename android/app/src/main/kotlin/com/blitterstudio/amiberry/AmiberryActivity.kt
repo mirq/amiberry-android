@@ -156,6 +156,12 @@ class AmiberryActivity : SDLActivity() {
             onButtonChanged = { button, pressed ->
                 Log.v(TAG, "Button $button: $pressed")
             }
+            onMouseButtonChanged = { button, pressed ->
+                Log.v(TAG, "Mouse button $button: $pressed")
+            }
+            onMouseMoved = { dx, dy ->
+                Log.v(TAG, "Mouse delta: dx=$dx dy=$dy")
+            }
             onF12Pressed = {
                 Log.d(TAG, "F12 button pressed")
                 // Send F12 key press using same approach as actual keyboard

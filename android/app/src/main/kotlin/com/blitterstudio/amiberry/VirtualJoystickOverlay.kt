@@ -33,8 +33,9 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
         
         // Overlay states
         const val STATE_OFF = 0
-        const val STATE_JOYSTICK = 1
-        const val STATE_KEYBOARD = 2
+        const val STATE_MOUSE = 1
+        const val STATE_JOYSTICK = 2
+        const val STATE_KEYBOARD = 3
         
         // Layout ratios (relative to screen height)
         private const val DPAD_SIZE_RATIO = 0.30f
@@ -44,6 +45,10 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
         
         // D-pad dead zone ratio
         private const val DPAD_DEADZONE = 0.25f
+        
+        // Mouse button area ratios
+        private const val PORTRAIT_BUTTON_HEIGHT_RATIO = 0.20f
+        private const val LANDSCAPE_BUTTON_WIDTH_RATIO = 0.15f
         
         // Scale limits
         private const val MIN_SCALE = 0.5f
@@ -62,8 +67,11 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
     // Current scale factor
     private var scaleFactor: Float = prefs.getFloat(PREF_SCALE, DEFAULT_SCALE)
 
-    // Current state
+    // Current state (default to OFF)
     private var overlayState = STATE_OFF
+    
+    // Orientation tracking
+    private var isPortrait = true
     
     // Paints
     private val dpadPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
@@ -108,6 +116,18 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
         color = Color.WHITE
         textAlign = Paint.Align.CENTER
     }
+    private val mouseButtonPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(120, 80, 80, 80)
+        style = Paint.Style.FILL
+    }
+    private val mouseButtonPressedPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.argb(180, 100, 150, 255)
+        style = Paint.Style.FILL
+    }
+    private val mouseButtonTextPaint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
+        color = Color.WHITE
+        textAlign = Paint.Align.CENTER
+    }
     
     // Rectangles for hit testing
     private val dpadRect = RectF()
@@ -117,6 +137,10 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
     private val plusRect = RectF()
     private val minusRect = RectF()
     private val f12Rect = RectF()
+    
+    // Mouse button areas
+    private val mouseLeftRect = RectF()
+    private val mouseRightRect = RectF()
     
     // D-pad state
     private var dpadUp = false
@@ -133,11 +157,22 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
     private var buttonAPointerId = -1
     private var buttonBPointerId = -1
     
+    // Mouse touch tracking
+    private var mouseLeftPressed = false
+    private var mouseRightPressed = false
+    private var mouseLeftPointerId = -1
+    private var mouseRightPointerId = -1
+    private var mouseMovePointerId = -1
+    private var lastMouseX = 0f
+    private var lastMouseY = 0f
+    
     // Callback for state changes
     var onStateChanged: ((Int) -> Unit)? = null
     var onJoystickChanged: ((Boolean, Boolean, Boolean, Boolean) -> Unit)? = null
     var onButtonChanged: ((Int, Boolean) -> Unit)? = null
     var onF12Pressed: (() -> Unit)? = null
+    var onMouseButtonChanged: ((Int, Boolean) -> Unit)? = null
+    var onMouseMoved: ((Float, Float) -> Unit)? = null
 
     init {
         // Make view clickable to receive touch events
@@ -151,6 +186,9 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
 
     private fun updateLayout(w: Int, h: Int) {
         val margin = (h * MARGIN_RATIO).toInt()
+        
+        // Detect orientation
+        isPortrait = h > w
         
         // D-pad (bottom-left) - affected by scale
         val dpadSize = (h * DPAD_SIZE_RATIO * scaleFactor).toInt()
@@ -217,7 +255,40 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
         // Update text size for resize buttons
         resizeTextPaint.textSize = resizeButtonSize * 0.7f
         
-        Log.d(TAG, "Layout updated: w=$w h=$h scale=$scaleFactor dpad=$dpadRect toggle=$toggleRect")
+        // Mouse button areas (orientation-dependent)
+        if (isPortrait) {
+            // Portrait: Bottom portion split into left/right buttons
+            val buttonHeight = (h * PORTRAIT_BUTTON_HEIGHT_RATIO).toInt()
+            mouseLeftRect.set(
+                0f,
+                (h - buttonHeight).toFloat(),
+                (w / 2).toFloat(),
+                h.toFloat()
+            )
+            mouseRightRect.set(
+                (w / 2).toFloat(),
+                (h - buttonHeight).toFloat(),
+                w.toFloat(),
+                h.toFloat()
+            )
+        } else {
+            // Landscape: Side strips for left/right buttons
+            val sideWidth = (w * LANDSCAPE_BUTTON_WIDTH_RATIO).toInt()
+            mouseLeftRect.set(
+                0f,
+                0f,
+                sideWidth.toFloat(),
+                h.toFloat()
+            )
+            mouseRightRect.set(
+                (w - sideWidth).toFloat(),
+                0f,
+                w.toFloat(),
+                h.toFloat()
+            )
+        }
+        
+        Log.d(TAG, "Layout updated: w=$w h=$h scale=$scaleFactor portrait=$isPortrait")
     }
 
     override fun onDraw(canvas: Canvas) {
@@ -226,6 +297,11 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
         // Always draw toggle button and resize buttons
         drawToggleButton(canvas)
         drawResizeButtons(canvas)
+        
+        // Draw mouse controls if in mouse state
+        if (overlayState == STATE_MOUSE) {
+            drawMouseButtons(canvas)
+        }
         
         // Draw joystick controls if in joystick state
         if (overlayState == STATE_JOYSTICK) {
@@ -353,6 +429,40 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
             canvas.drawCircle(buttonBRect.centerX(), buttonBRect.centerY(), radiusB - 2, buttonPressedPaint)
         }
     }
+    
+    private fun drawMouseButtons(canvas: Canvas) {
+        // Set text size based on button area size
+        val textSize = if (isPortrait) {
+            mouseLeftRect.height() * 0.15f
+        } else {
+            mouseLeftRect.width() * 0.25f
+        }
+        mouseButtonTextPaint.textSize = textSize
+        
+        // Left mouse button
+        canvas.drawRect(
+            mouseLeftRect,
+            if (mouseLeftPressed) mouseButtonPressedPaint else mouseButtonPaint
+        )
+        canvas.drawText(
+            "LMB",
+            mouseLeftRect.centerX(),
+            mouseLeftRect.centerY() - (mouseButtonTextPaint.descent() + mouseButtonTextPaint.ascent()) / 2,
+            mouseButtonTextPaint
+        )
+        
+        // Right mouse button
+        canvas.drawRect(
+            mouseRightRect,
+            if (mouseRightPressed) mouseButtonPressedPaint else mouseButtonPaint
+        )
+        canvas.drawText(
+            "RMB",
+            mouseRightRect.centerX(),
+            mouseRightRect.centerY() - (mouseButtonTextPaint.descent() + mouseButtonTextPaint.ascent()) / 2,
+            mouseButtonTextPaint
+        )
+    }
 
     override fun onTouchEvent(event: MotionEvent): Boolean {
         val action = event.actionMasked
@@ -383,6 +493,27 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
                     return true
                 }
                 
+                // Handle mouse controls if in MOUSE state
+                if (overlayState == STATE_MOUSE) {
+                    if (mouseLeftRect.contains(x, y) && mouseLeftPointerId == -1) {
+                        mouseLeftPointerId = pointerId
+                        setMouseLeftPressed(true)
+                        return true
+                    }
+                    if (mouseRightRect.contains(x, y) && mouseRightPointerId == -1) {
+                        mouseRightPointerId = pointerId
+                        setMouseRightPressed(true)
+                        return true
+                    }
+                    // Start tracking mouse movement if not on button areas
+                    if (mouseMovePointerId == -1) {
+                        mouseMovePointerId = pointerId
+                        lastMouseX = x
+                        lastMouseY = y
+                        return true
+                    }
+                }
+                
                 // Handle joystick controls only if in JOYSTICK state
                 if (overlayState == STATE_JOYSTICK) {
                     if (dpadRect.contains(x, y) && dpadPointerId == -1) {
@@ -407,8 +538,31 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
             }
             
             MotionEvent.ACTION_MOVE -> {
-                // Only handle if we're tracking a pointer
-                if (dpadPointerId != -1 || buttonAPointerId != -1 || buttonBPointerId != -1) {
+                // Handle mouse movement if in MOUSE state
+                if (overlayState == STATE_MOUSE && mouseMovePointerId != -1) {
+                    for (i in 0 until event.pointerCount) {
+                        val pid = event.getPointerId(i)
+                        if (pid == mouseMovePointerId) {
+                            val px = event.getX(i)
+                            val py = event.getY(i)
+                            
+                            // Calculate delta
+                            val dx = px - lastMouseX
+                            val dy = py - lastMouseY
+                            
+                            // Only send if delta is significant (avoid noise)
+                            if (dx != 0f || dy != 0f) {
+                                sendMouseDelta(dx, dy)
+                                lastMouseX = px
+                                lastMouseY = py
+                            }
+                            return true
+                        }
+                    }
+                }
+                
+                // Handle joystick movement if in JOYSTICK state
+                if (overlayState == STATE_JOYSTICK && (dpadPointerId != -1 || buttonAPointerId != -1 || buttonBPointerId != -1)) {
                     // Update all active pointers
                     for (i in 0 until event.pointerCount) {
                         val pid = event.getPointerId(i)
@@ -426,6 +580,24 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
             
             MotionEvent.ACTION_UP, MotionEvent.ACTION_POINTER_UP, MotionEvent.ACTION_CANCEL -> {
                 var handled = false
+                
+                // Handle mouse button releases
+                if (pointerId == mouseLeftPointerId) {
+                    mouseLeftPointerId = -1
+                    setMouseLeftPressed(false)
+                    handled = true
+                }
+                if (pointerId == mouseRightPointerId) {
+                    mouseRightPointerId = -1
+                    setMouseRightPressed(false)
+                    handled = true
+                }
+                if (pointerId == mouseMovePointerId) {
+                    mouseMovePointerId = -1
+                    handled = true
+                }
+                
+                // Handle joystick releases
                 if (pointerId == dpadPointerId) {
                     dpadPointerId = -1
                     clearDpadState()
@@ -548,10 +720,34 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
             invalidate()
         }
     }
+    
+    private fun setMouseLeftPressed(pressed: Boolean) {
+        if (mouseLeftPressed != pressed) {
+            mouseLeftPressed = pressed
+            onMouseButtonChanged?.invoke(0, pressed)
+            nativeSetMouseButton(0, pressed)
+            invalidate()
+        }
+    }
+    
+    private fun setMouseRightPressed(pressed: Boolean) {
+        if (mouseRightPressed != pressed) {
+            mouseRightPressed = pressed
+            onMouseButtonChanged?.invoke(1, pressed)
+            nativeSetMouseButton(1, pressed)
+            invalidate()
+        }
+    }
+    
+    private fun sendMouseDelta(dx: Float, dy: Float) {
+        onMouseMoved?.invoke(dx, dy)
+        nativeSetMouseDelta(dx, dy)
+    }
 
     private fun cycleState() {
         overlayState = when (overlayState) {
-            STATE_OFF -> STATE_JOYSTICK
+            STATE_OFF -> STATE_MOUSE
+            STATE_MOUSE -> STATE_JOYSTICK
             STATE_JOYSTICK -> STATE_KEYBOARD
             else -> STATE_OFF
         }
@@ -560,7 +756,7 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
         onStateChanged?.invoke(overlayState)
         nativeSetOverlayState(overlayState)
         
-        // Clear any pressed states when hiding
+        // Clear joystick states when leaving joystick mode
         if (overlayState != STATE_JOYSTICK) {
             clearDpadState()
             setButtonAPressed(false)
@@ -568,6 +764,15 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
             dpadPointerId = -1
             buttonAPointerId = -1
             buttonBPointerId = -1
+        }
+        
+        // Clear mouse states when leaving mouse mode
+        if (overlayState != STATE_MOUSE) {
+            setMouseLeftPressed(false)
+            setMouseRightPressed(false)
+            mouseLeftPointerId = -1
+            mouseRightPointerId = -1
+            mouseMovePointerId = -1
         }
         
         invalidate()
@@ -587,4 +792,6 @@ class VirtualJoystickOverlay @JvmOverloads constructor(
     private external fun nativeSetButton(button: Int, pressed: Boolean)
     private external fun nativeSetOverlayState(state: Int)
     private external fun nativeSetKey(keyCode: Int, pressed: Boolean)
+    private external fun nativeSetMouseButton(button: Int, pressed: Boolean)
+    private external fun nativeSetMouseDelta(dx: Float, dy: Float)
 }

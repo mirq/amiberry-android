@@ -29,7 +29,7 @@ extern void inputdevice_do_keyboard(int code, int state);
 // Check if we're in GUI mode
 extern bool gui_running;
 
-// Overlay state
+// Overlay state (default to OFF)
 static AndroidOverlayState s_overlay_state = OVERLAY_OFF;
 
 // Joystick state tracking
@@ -49,6 +49,10 @@ extern int send_input_event(int nr, int state, int max, int autofire);
 // Access to the joystick device functions
 extern void setjoybuttonstate(int joy, int button, int state);
 extern void setjoystickstate(int joy, int axis, int state, int max);
+
+// Access to the mouse input functions
+extern void setmousebuttonstate(int mouse, int button, int state);
+extern void setmousestate(int mouse, int axis, int data, int isabs);
 
 // Push a fake SDL keyboard event via SDL event queue (for when gui_input isn't available)
 static void push_sdl_key(SDL_Keycode key, bool pressed) {
@@ -350,6 +354,32 @@ Java_com_blitterstudio_amiberry_VirtualKeyboardOverlay_nativeSetKey(
     }
 }
 
+// JNI function: Set mouse button state
+extern "C" JNIEXPORT void JNICALL
+Java_com_blitterstudio_amiberry_VirtualJoystickOverlay_nativeSetMouseButton(
+    JNIEnv* env, jobject thiz,
+    jint button, jboolean pressed)
+{
+    // button: 0 = left, 1 = right
+    // Uses setmousebuttonstate(int mouse, int button, int state)
+    setmousebuttonstate(0, button, pressed ? 1 : 0);
+    SDL_Log("VMouse JNI: button=%d pressed=%d", button, pressed);
+}
+
+// JNI function: Set mouse delta (relative movement)
+extern "C" JNIEXPORT void JNICALL
+Java_com_blitterstudio_amiberry_VirtualJoystickOverlay_nativeSetMouseDelta(
+    JNIEnv* env, jobject thiz,
+    jfloat dx, jfloat dy)
+{
+    // Uses setmousestate(int mouse, int axis, int data, int isabs)
+    // isabs=0 means relative movement
+    setmousestate(0, 0, static_cast<int>(dx), 0);  // X axis
+    setmousestate(0, 1, static_cast<int>(dy), 0);  // Y axis
+    // Uncomment for verbose logging:
+    // SDL_Log("VMouse JNI: dx=%.2f dy=%.2f", dx, dy);
+}
+
 // C++ API functions (kept for compatibility)
 
 void android_vjoystick_init(SDL_Renderer* renderer) {
@@ -436,6 +466,22 @@ void android_vjoystick_set_button(int button, bool pressed) {
     setjoybuttonstate(s_virtual_joystick_device_id, button, pressed ? 1 : 0);
     SDL_Log("VJoystick: set_button(device=%d, button=%d, pressed=%d)", 
             s_virtual_joystick_device_id, button, pressed);
+}
+
+void android_vmouse_set_button(int button, bool pressed) {
+    // Send mouse button through the input system
+    // button: 0 = left, 1 = right
+    setmousebuttonstate(0, button, pressed ? 1 : 0);
+    SDL_Log("VMouse: set_button(button=%d, pressed=%d)", button, pressed);
+}
+
+void android_vmouse_set_delta(float dx, float dy) {
+    // Send relative mouse movement
+    // isabs=0 means relative movement
+    setmousestate(0, 0, static_cast<int>(dx), 0);  // X axis
+    setmousestate(0, 1, static_cast<int>(dy), 0);  // Y axis
+    // Uncomment for verbose logging:
+    // SDL_Log("VMouse: set_delta(dx=%.2f, dy=%.2f)", dx, dy);
 }
 
 #endif // __ANDROID__
